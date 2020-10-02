@@ -1,8 +1,10 @@
 import discord
 import consts
-
+import config
+from models import User
 
 client = discord.Client()
+config.config_db()
 
 
 def cmd(str):
@@ -22,6 +24,15 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return
+
+    user_id = message.author.id
+
+    _user = User.get(User.user_id == user_id).get()
+    if not _user:
+        User.create(user_id=user_id, level=0)
+    else:
+        _user.level += _user.level + len(message.content) * 0.01
+        _user.save()
 
     if message.content == cmd("level"):
         await message.channel.send("level command!")
