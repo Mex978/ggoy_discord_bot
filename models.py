@@ -10,4 +10,6 @@ class BaseModel(peewee.Model):
 
 class User(BaseModel):
     user_id = peewee.IntegerField(unique=True)
-    level = peewee.FloatField()
+    level = peewee.IntegerField()
+    xp = peewee.FloatField()
+    xp_needed = peewee.FloatField()

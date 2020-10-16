@@ -1,9 +1,9 @@
 import models
 
 
-def config_db():
+def create_table():
     try:
         models.User.create_table()
-        print("Tabela 'Users' criada com sucesso!")
+        print("Tabela 'User' criada com sucesso!")
     except peewee.OperationalError:
-        print("Tabela 'Users' ja existe!")
+        print("Tabela 'User' ja existe!")
