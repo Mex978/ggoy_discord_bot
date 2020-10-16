@@ -2,6 +2,7 @@ from models import User
 import discord
 import config
 import consts
+import render_banner
 
 
 client = discord.Client()
@@ -30,8 +31,10 @@ async def on_message(message):
         try:
             _users = User.select().where(User.user_id == message.author.id)
             if _users:
+                _user = _users[0]
                 await message.channel.send(
-                    f"<@{message.author.id}> está no level {_users[0].level}"
+                    f"<@{message.author.id}> está no level " +
+                    f"{_users[0].level} com {_users[0].xp:.2f} de xp"
                 )
             else:
                 User.create(
@@ -50,21 +53,23 @@ async def on_message(message):
     elif message.content.startswith(cmd("")):
         await message.channel.send("Comando não encontrado :frowning:")
     else:
-         _users = User.select().where(User.user_id == message.author.id)
+        _users = User.select().where(User.user_id == message.author.id)
         if not _users:
             User.create(user_id=message.author.id, level=1, xp=0.0)
         else:
-            _user =_users[0]
-            _user.xp += len(message.content) * consts.XP_PER_CHARACTER
+            caracteres = len(message.content) if len(message.content) <= 75 else 75
+            _user = _users[0]
+            _user.xp += caracteres * consts.XP_PER_CHARACTER
 
             if _user.xp >= (
-                _user.xp_needed + (_user.xp_needed * consts.NEXT_LEVEL_XP_FACTOR)
+                _user.xp_needed +
+                (_user.xp_needed * consts.NEXT_LEVEL_XP_FACTOR)
             ):
                 _user.xp = 0.0
                 _user.level += 1
                 await message.channel.send(
                     f"<@{message.author.id}> subiu para o nível {_user.level}",
-                    allowed_mentions=AllowedMentions(everyone=True),
+                    allowed_mentions=discord.AllowedMentions(everyone=True),
                 )
 
             _user.save()
