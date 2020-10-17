@@ -28,29 +28,25 @@ async def on_message(message):
 
     user_id = message.author.id
 
-    _user = User.get(User.user_id == user_id).get()
-    if not _user:
-        User.create(user_id=user_id, level=0)
-    else:
-        _user.level += _user.level + len(message.content) * 0.01
-        _user.save()
-
     if message.content == cmd("level"):
         try:
-            _users = User.select().where(User.user_id == message.author.id)
+            _users = User.select().where(User.user_id == user_id)
             if _users:
                 _user = _users[0]
+                _file = render_banner.run(message.author.avatar_url, _user.xp_needed, message.author.name, _user.level, _user.xp)
                 await message.channel.send(
-                    f"<@{message.author.id}> está no level " +
-                    f"{_users[0].level} com {_users[0].xp:.2f} de xp"
+                    # f"<@{user_id}> está no level " +
+                    # f"{_users[0].level} com {_users[0].xp:.2f} de xp",
+                    file=_file,
                 )
             else:
                 User.create(
-                    user_id=message.author.id,
+                    user_id=user_id,
                     level=1,
                     xp=0.0,
                     xp_needed=consts.INITIAL_XP_NEEDED,
                 )
+                await message.channel.send(f"<@{user_id}> não estava cadastrado, mas agora pode subir de nível!")
         except Exception as error:
             await message.channel.send(f"Error:\n```{error}```")
     elif message.content == cmd("rank"):
@@ -61,9 +57,14 @@ async def on_message(message):
     elif message.content.startswith(cmd("")):
         await message.channel.send("Comando não encontrado :frowning:")
     else:
-        _users = User.select().where(User.user_id == message.author.id)
+        _users = User.select().where(User.user_id == user_id)
         if not _users:
-            User.create(user_id=message.author.id, level=1, xp=0.0)
+            User.create(
+                user_id=user_id,
+                level=1,
+                xp=0.0,
+                xp_needed=consts.INITIAL_XP_NEEDED,
+            )
         else:
             caracteres = len(message.content) if len(message.content) <= 75 else 75
             _user = _users[0]
@@ -76,7 +77,7 @@ async def on_message(message):
                 _user.xp = 0.0
                 _user.level += 1
                 await message.channel.send(
-                    f"<@{message.author.id}> subiu para o nível {_user.level}",
+                    f"<@{user_id}> subiu para o nível {_user.level}",
                     allowed_mentions=discord.AllowedMentions(everyone=True),
                 )
 

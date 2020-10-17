@@ -1,3 +1,4 @@
 discord.py
 pydotenv
 peewee
+pillow
