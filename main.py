@@ -2,7 +2,6 @@ from models import User
 import discord
 import config
 import consts
-import render_banner
 import traceback
 import random
 
@@ -42,11 +41,10 @@ async def on_message(message):
                 )
                 _user_roles = [role.name for role in message.author.roles if role.name != '@everyone']
                 _user_roles = " | ".join(_user_roles)
-
                 embedMessage.set_thumbnail(url=message.author.avatar_url)
-                embedMessage.add_field(name="Role(s)", value=f"```{_user_roles}```", inline=False)
                 embedMessage.add_field(name="Level", value=f"```{_user.level}```", inline=True)
                 embedMessage.add_field(name="XP", value=f"```{_user.xp:.2f}/{_user.xp_needed:.2f}```", inline=True)
+                embedMessage.add_field(name="Role(s)", value=f"```{_user_roles}```", inline=False)
 
                 await message.channel.send(embed=embedMessage)
             else:
