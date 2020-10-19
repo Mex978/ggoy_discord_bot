@@ -4,6 +4,9 @@ import config
 import consts
 import traceback
 import random
+import youtube_dl
+from youtube_search import YoutubeSearch
+import json
 
 client = discord.Client()
 config.create_table()
@@ -40,7 +43,7 @@ async def on_message(message):
                     desciption=""
                 )
                 _user_roles = [role.name for role in message.author.roles if role.name != '@everyone']
-                _user_roles = " | ".join(_user_roles)
+                _user_roles = " | ".join(_user_roles) if _user_roles else "Sem roles"
                 embedMessage.set_thumbnail(url=message.author.avatar_url)
                 embedMessage.add_field(name="Level", value=f"```{_user.level}```", inline=True)
                 embedMessage.add_field(name="XP", value=f"```{_user.xp:.2f}/{_user.xp_needed:.2f}```", inline=True)
@@ -60,12 +63,45 @@ async def on_message(message):
             
             await message.channel.send(f"Error:\n```{error}```")
     elif message.content == cmd("rank"):
-
         await message.channel.send("rank command!")
     elif message.content.startswith(cmd("play ")):
         _arg = message.content.split(" ", 1)[1].strip()
+        
+        if message.guild.voice_client is not None:
+            await message.channel.send("Already playing")
+            return
 
-        await message.channel.send(_arg)
+        _voice_client = message.author.voice.channel
+
+
+        await _voice_client.connect()
+
+        ydl_opts = {
+            'format': 'beataudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192'
+            }]
+        }
+        yt = YoutubeSearch(_arg, max_results=1).to_json()
+        yt_id = str(json.loads(yt)['videos'][0]['id'])
+        yt_url = 'https://www.youtube.com/watch?v='+yt_id
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            song_info = ydl.extract_info(yt_url, download=False)
+            message.guild.voice_client.play(discord.FFmpegPCMAudio(song_info["formats"][0]["url"]))
+            message.guild.voice_client.source = discord.PCMVolumeTransformer(message.guild.voice_client.source)
+            message.guild.voice_client.source.volume = 0.5
+
+            songname = song_info.get('title', None)
+            await message.channel.send(embed=discord.Embed(description=f"Playing `{songname}`")) 
+
+
+    elif message.content == cmd("stop"):
+        _voice_client = message.guild.voice_client
+        if _voice_client.is_connected():
+            await _voice_client.disconnect()
+
     elif message.content == cmd("cuck"):
         goy_percent_pre = random.randint(0, 100)
         goy_percent_pos = random.randint(0, 9)
