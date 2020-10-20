@@ -18,6 +18,7 @@ client = discord.Client()
 config.create_table()
 
 queue = {}
+current_volume = 0.5
 
 
 def cmd(str):
@@ -35,7 +36,8 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    global queue
+    global queue, current_volume
+
     if message.author == client.user or message.author.bot:
         return
 
@@ -127,7 +129,8 @@ async def on_message(message):
             new_volume = float(_arg)
             if new_volume < 0.0 or new_volume > 1.0:
                 raise Exception()
-            message.guild.voice_client.source.volume = new_volume
+            current_volume = new_volume
+            message.guild.voice_client.source.volume = current_volume
             await message.channel.send(
                 embed=discord.Embed(description=f"Changed volume to `{new_volume}`")
             )
@@ -257,6 +260,7 @@ async def on_message(message):
                 message.guild.voice_client.source = discord.PCMVolumeTransformer(
                     message.guild.voice_client.source
                 )
+                message.guild.voice_client.source.volume = current_volume
 
         _arg = message.content.split(" ", 1)[1].strip()
 
@@ -338,7 +342,7 @@ async def on_message(message):
             message.guild.voice_client.source = discord.PCMVolumeTransformer(
                 message.guild.voice_client.source
             )
-            message.guild.voice_client.source.volume = 0.5
+            message.guild.voice_client.source.volume = current_volume
 
             await searchingMessage.delete()
             await message.channel.send(
