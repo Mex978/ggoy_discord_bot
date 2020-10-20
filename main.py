@@ -254,9 +254,9 @@ async def on_message(message):
                     discord.FFmpegPCMAudio(next_song["url"], **FFMPEG_OPTIONS),
                     after=lambda e: check_queue(),
                 )
-                # message.guild.voice_client.source = discord.PCMVolumeTransformer(
-                #     message.guild.voice_client.source
-                # )
+                message.guild.voice_client.source = discord.PCMVolumeTransformer(
+                    message.guild.voice_client.source
+                )
 
         _arg = message.content.split(" ", 1)[1].strip()
 
