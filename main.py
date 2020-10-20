@@ -13,7 +13,7 @@ import get_dominant_color
 client = discord.Client()
 config.create_table()
 
-queue = None
+queue = {}
 
 
 def cmd(str):
@@ -308,7 +308,13 @@ async def on_message(message):
                 )
 
             return
-
+        if message.author.voice is None:
+            await message.channel.send(
+                embed=discord.Embed(
+                     color=0xFF0000, description=f"You need to be connected on a voice channel!"
+                 )
+            )
+            return
         _voice_client = message.author.voice.channel
 
         if message.guild.voice_client is None:
@@ -345,7 +351,7 @@ async def on_message(message):
             song_info = ydl.extract_info(yt_url, download=False)
             songname = song_info.get("title", None)
 
-            if queue is None:
+            if queue is None or queue.get("current", None) is None:
                 queue = {"current": {}, "queue": []}
             queue["current"]["name"] = songname
             queue["current"]["url"] = song_info["formats"][0]["url"]
