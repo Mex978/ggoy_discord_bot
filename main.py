@@ -9,6 +9,7 @@ from youtube_search import YoutubeSearch
 import json
 import asyncio
 import get_dominant_color
+import os
 
 client = discord.Client()
 config.create_table()
@@ -398,5 +399,8 @@ async def on_message(message):
     elif message.content.startswith(cmd("")):
         await message.channel.send("Comando não encontrado :frowning:")
 
+_key = consts.ENV.get("SECRET_KEY", None)
+if _key is None:
+    _key = os.getenv('SECRET_KEY')
 
-client.run(consts.ENV["SECRET_KEY"])
+client.run(_key)
