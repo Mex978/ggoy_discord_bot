@@ -4,3 +4,5 @@ peewee
 discord.py[voice]
 youtube_dl
 youtube_search
+scipy
+pillow
