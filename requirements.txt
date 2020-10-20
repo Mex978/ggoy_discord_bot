@@ -6,3 +6,4 @@ youtube_dl
 youtube_search
 scipy
 pillow
+PyNaCl
