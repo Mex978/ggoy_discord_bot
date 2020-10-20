@@ -71,15 +71,6 @@ async def on_message(message):
 
     if message.content == cmd("level"):
         try:
-            # if not _users:
-            #     _msg = await message.channel.send(
-            #         embed=discord.Embed(
-            #             color=0xFF0000,
-            #             description=f"<@{user_id}> não estava cadastrado, mas agora pode começar a subir de nível!",
-            #         )
-            #     )
-            #     return
-
             _user = _users[0]
 
             _, dominant_color = get_dominant_color.run(message.author.avatar_url)
@@ -273,17 +264,6 @@ async def on_message(message):
             message.guild.voice_client is not None
             and message.guild.voice_client.is_playing()
         ):
-            ydl_opts = {
-                "format": "beataudio/best",
-                "quiet": True,
-                "postprocessors": [
-                    {
-                        "key": "FFmpegExtractAudio",
-                        "preferredcodec": "mp3",
-                        "preferredquality": "192",
-                    }
-                ],
-            }
             searchingMessage = await message.channel.send(
                 embed=discord.Embed(
                     color=0x00FF00, description=f"**Searching** `{_arg}`..."
@@ -293,7 +273,7 @@ async def on_message(message):
             yt = YoutubeSearch(_arg, max_results=1).to_json()
             yt_id = str(json.loads(yt)["videos"][0]["id"])
             yt_url = "https://www.youtube.com/watch?v=" + yt_id
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
                 song_info = ydl.extract_info(yt_url, download=False)
                 songname = song_info.get("title", None)
 
@@ -332,17 +312,6 @@ async def on_message(message):
             "options": "-vn",
         }
 
-        ydl_opts = {
-            "format": "beataudio/best",
-            "quiet": True,
-            "postprocessors": [
-                {
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "192",
-                }
-            ],
-        }
         searchingMessage = await message.channel.send(
             embed=discord.Embed(
                 color=0x00FF00, description=f"**Searching** `{_arg}`..."
@@ -351,7 +320,7 @@ async def on_message(message):
         yt = YoutubeSearch(_arg, max_results=1).to_json()
         yt_id = str(json.loads(yt)["videos"][0]["id"])
         yt_url = "https://www.youtube.com/watch?v=" + yt_id
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
             song_info = ydl.extract_info(yt_url, download=False)
             songname = song_info.get("title", None)
 
