@@ -10,6 +10,9 @@ import json
 import asyncio
 import get_dominant_color
 import os
+import ctypes
+import ctypes.util
+
 
 client = discord.Client()
 config.create_table()
