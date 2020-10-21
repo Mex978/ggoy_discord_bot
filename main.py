@@ -41,6 +41,33 @@ async def on_message(message):
     if message.author == client.user or message.author.bot:
         return
 
+    if message.content.startswith(cmd("")) and message.channel.name != "comandos-bot":
+        _msg = await message.channel.send(
+            embed=discord.Embed(
+                color=0xFF0000,
+                description="Commands not available in that text channel, please type in the `commandos-bot`",
+            )
+        )
+
+        await asyncio.sleep(5)
+        await _msg.delete()
+        await message.delete()
+        return
+    elif (
+        not message.content.startswith(cmd(""))
+    ) and message.channel.name == "comandos-bot":
+        _msg = await message.channel.send(
+            embed=discord.Embed(
+                color=0xFF0000,
+                description="Only commands are available on this channel",
+            )
+        )
+
+        await asyncio.sleep(5)
+        await _msg.delete()
+        await message.delete()
+        return
+
     user_id = message.author.id
     user_disc = message.author.discriminator
 
@@ -106,7 +133,51 @@ async def on_message(message):
 
             await message.channel.send(f"Error:\n```{error}```")
     elif message.content == cmd("rank"):
-        await message.channel.send("rank command!")
+        await message.channel.send(
+            embed=discord.Embed(
+                color=0xFF0000,
+                description="Coming soon",
+            )
+        )
+        return
+
+        try:
+            _all_users = User.select()
+
+            if not _all_users:
+                await message.channel.send(
+                    embed=discord.Embed(color=0xFF0000, description="No goys :(")
+                )
+                return
+
+            embedMessage = discord.Embed(
+                color=0x00FF00,
+                title=f"Rank Goys",
+                desciption="",
+            )
+            for role in message.guild.roles:
+                for member in role.members:
+                    print(member.name)
+
+            for index, _user in enumerate(_all_users):
+                _user_roles = [
+                    role.name
+                    for role in message.author.roles
+                    if role.name != "@everyone"
+                ]
+                _user_roles = " | ".join(_user_roles) if _user_roles else "Sem roles"
+
+                embedMessage.add_field(
+                    name=f"#{index + 1}",
+                    value=f"```User: {message.guild.get_member(_user.user_id)}\nLevel: {_user.level}\nXP: {_user.xp:.2f}/{_user.xp_needed:.2f}\nRoles: {_user_roles}```",
+                    inline=False,
+                )
+
+            await message.channel.send(embed=embedMessage)
+        except Exception as error:
+            print(traceback.print_exc())
+
+            await message.channel.send(f"Error:\n```{error}```")
     elif message.content.startswith(cmd("volume")):
         if message.guild.voice_client is None:
             await message.channel.send(
@@ -120,7 +191,8 @@ async def on_message(message):
         if not _arg:
             await message.channel.send(
                 embed=discord.Embed(
-                    description=f"Current volume is `{message.guild.voice_client.source.volume}`"
+                    color=0x00FF00,
+                    description=f"Current volume is `{message.guild.voice_client.source.volume}`",
                 )
             )
             return
@@ -132,7 +204,9 @@ async def on_message(message):
             current_volume = new_volume
             message.guild.voice_client.source.volume = current_volume
             await message.channel.send(
-                embed=discord.Embed(description=f"Changed volume to `{new_volume}`")
+                embed=discord.Embed(
+                    color=0x00FF00, description=f"Changed volume to `{new_volume}`"
+                )
             )
         except Exception as error:
             print(error)
@@ -245,6 +319,99 @@ async def on_message(message):
                     color=0xFF0000, description=f"GGoyBot not in voice channel!"
                 )
             )
+    elif message.content == cmd("cyberpunk"):
+
+        def check_queue():
+            if queue.get("queue", None):
+                next_song = queue["queue"].pop(0)
+                queue["current"] = next_song
+
+                message.guild.voice_client.play(
+                    discord.FFmpegPCMAudio(next_song["url"], **FFMPEG_OPTIONS),
+                    after=lambda e: check_queue(),
+                )
+                message.guild.voice_client.source = discord.PCMVolumeTransformer(
+                    message.guild.voice_client.source
+                )
+                message.guild.voice_client.source.volume = current_volume
+
+        if (
+            message.guild.voice_client is not None
+            and message.guild.voice_client.is_playing()
+        ):
+            _msg_priorizado = await message.channel.send(
+                embed=discord.Embed(
+                    color=0xFF0000, description=f"Cyberpunk priorizado, foi mal :("
+                )
+            )
+            yt_url = "https://www.youtube.com/watch?v=mrZC1Jcv0dw"
+            with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
+                song_info = ydl.extract_info(yt_url, download=False)
+                songname = song_info.get("title", None)
+
+                if not queue.get("queue", None):
+                    queue["queue"] = []
+
+                queue["queue"].insert(0, queue["current"])
+                queue["queue"].insert(
+                    0, {"name": songname, "url": song_info["formats"][0]["url"]}
+                )
+                message.guild.voice_client.stop()
+                await _msg_priorizado.delete()
+                await message.channel.send(
+                    embed=discord.Embed(
+                        color=0x00FF00, description=f"**Playing** `{songname}`"
+                    )
+                )
+
+            return
+        if message.author.voice is None:
+            await message.channel.send(
+                embed=discord.Embed(
+                    color=0xFF0000,
+                    description=f"You need to be connected on a voice channel!",
+                )
+            )
+            return
+        _voice_client = message.author.voice.channel
+
+        if message.guild.voice_client is None:
+            await message.guild.change_voice_state(
+                channel=message.channel, self_deaf=True, self_mute=False
+            )
+            await _voice_client.connect()
+
+        FFMPEG_OPTIONS = {
+            "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+            "options": "-vn",
+        }
+
+        yt_url = "https://www.youtube.com/watch?v=mrZC1Jcv0dw"
+        with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
+            song_info = ydl.extract_info(yt_url, download=False)
+            songname = song_info.get("title", None)
+
+            if queue is None or queue.get("current", None) is None:
+                queue = {"current": {}, "queue": []}
+            queue["current"]["name"] = songname
+            queue["current"]["url"] = song_info["formats"][0]["url"]
+
+            message.guild.voice_client.play(
+                discord.FFmpegPCMAudio(
+                    song_info["formats"][0]["url"], **FFMPEG_OPTIONS
+                ),
+                after=lambda e: check_queue(),
+            )
+            message.guild.voice_client.source = discord.PCMVolumeTransformer(
+                message.guild.voice_client.source
+            )
+            message.guild.voice_client.source.volume = current_volume
+
+            await message.channel.send(
+                embed=discord.Embed(
+                    color=0x00FF00, description=f"**Playing** `{songname}`"
+                )
+            )
 
     elif message.content.startswith(cmd("play ")):
 
@@ -299,8 +466,9 @@ async def on_message(message):
         if message.author.voice is None:
             await message.channel.send(
                 embed=discord.Embed(
-                     color=0xFF0000, description=f"You need to be connected on a voice channel!"
-                 )
+                    color=0xFF0000,
+                    description=f"You need to be connected on a voice channel!",
+                )
             )
             return
         _voice_client = message.author.voice.channel
@@ -372,11 +540,59 @@ async def on_message(message):
         await message.channel.send(
             f"<@{user_id}> é {goy_percent_pre}.{goy_percent_pos}% goy! <:56781042_811112372584549_2847201:575829560285986816>"
         )
+    elif message.content == cmd("help"):
+        _help = """
+        `\level`
+        Mostra o seu goy card
+
+        `\\rank`
+        Mostra o rank com todos os goys do servidor
+
+        `\goy`
+        Mostra uma porcentagem do quão goy você é
+
+        `\cuck`
+        Mostra uma porcentagem do quão cuck você é
+
+        `\play [Nome para pesquisar]`
+        Toca a música que foi passada por parametro, se e somente se, for encontrada XD
+
+        `\skip`
+        Pula a música atual, se alguma estiver tocando
+
+        `\stop`
+        Para todas as músicas
+        
+        `\playing`
+        Mostra o nome da música que está tocando, se esta existir
+
+        `\\volume`
+        Exibe o volume atual do bot de música
+
+        `\\volume [valor entre 0.0 e 1.0]`
+        Ajusta o volume do bot de música
+
+        `\queue`
+        Mostra a fila de músicas a serem reproduzidas
+
+        `\pause`
+        Pausa a música atual, se alguma estiver tocando
+
+        `\\resume`
+        Continua a tocar uma música pausada anteriormente
+
+        `\cyberpunk`
+        Toca a música do cyberpunk independente da fila
+        """
+        await message.channel.send(
+            embed=discord.Embed(color=0x00FF00, description=_help)
+        )
     elif message.content.startswith(cmd("")):
         await message.channel.send("Comando não encontrado :frowning:")
 
+
 _key = consts.ENV.get("SECRET_KEY", None)
 if _key is None:
-    _key = os.getenv('SECRET_KEY')
+    _key = os.getenv("SECRET_KEY")
 
 client.run(_key)
