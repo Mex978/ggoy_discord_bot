@@ -84,12 +84,13 @@ async def on_message(message):
     else:
         caracteres = len(message.content) if len(message.content) <= 75 else 75
         _user = _users[0]
+        print(_user.xp)
+        print(_user.xp_needed)
         _user.xp += caracteres * consts.XP_PER_CHARACTER
 
-        if _user.xp >= (
-            _user.xp_needed + (_user.xp_needed * consts.NEXT_LEVEL_XP_FACTOR)
-        ):
+        if _user.xp >= _user.xp_needed:
             _user.xp = 0.0
+            _user.xp_needed += (_user.xp_needed * consts.NEXT_LEVEL_XP_FACTOR)
             _user.level += 1
             await message.channel.send(
                 f"<@{user_id}> subiu para o nível {_user.level}",
