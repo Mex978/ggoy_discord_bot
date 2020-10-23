@@ -19,6 +19,7 @@ client = discord.Client()
 config.create_table()
 
 queue = {}
+loop = False
 current_volume = 0.5
 
 
@@ -37,12 +38,12 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    global queue, current_volume
+    global queue, current_volume, loop
 
     if message.author == client.user or message.author.bot:
         return
 
-    if (message.content.startswith(cmd("")) and message.channel.name != "comandos-bot"):
+    if message.content.startswith(cmd("")) and message.channel.name != "comandos-bot":
         _msg = await message.channel.send(
             embed=discord.Embed(
                 color=0xFF0000,
@@ -89,7 +90,7 @@ async def on_message(message):
 
         if _user.xp >= _user.xp_needed:
             _user.xp = 0.0
-            _user.xp_needed += (_user.xp_needed * consts.NEXT_LEVEL_XP_FACTOR)
+            _user.xp_needed += _user.xp_needed * consts.NEXT_LEVEL_XP_FACTOR
             _user.level += 1
             await message.channel.send(
                 f"<@{user_id}> subiu para o nível {_user.level}",
@@ -175,6 +176,14 @@ async def on_message(message):
             print(traceback.print_exc())
 
             await message.channel.send(f"Error:\n```{error}```")
+    elif message.content == cmd("loop"):
+        loop = not loop
+        await message.channel.send(
+            embed=discord.Embed(
+                color=0x00FF00, description=f"Loop option changed to `{loop}`"
+            )
+        )
+        return
     elif message.content.startswith(cmd("volume")):
         if message.guild.voice_client is None:
             await message.channel.send(
@@ -221,7 +230,18 @@ async def on_message(message):
                 _queue_list = f"Currently playing\n\t `{_current_name}` - `{_current_duration}`\n\nNext:\n"
                 _queue_list += "\n".join(
                     [
-                        ("\t" + str(number + 1) + ". " + "`" + item["name"] + "`" + " - " + "`" + item["duration"] + "`")
+                        (
+                            "\t"
+                            + str(number + 1)
+                            + ". "
+                            + "`"
+                            + item["name"]
+                            + "`"
+                            + " - "
+                            + "`"
+                            + item["duration"]
+                            + "`"
+                        )
                         for number, item in enumerate(queue["queue"])
                     ]
                 )
@@ -246,6 +266,7 @@ async def on_message(message):
                 )
             )
     elif message.content == (cmd("skip")):
+        loop = False
         if message.guild.voice_client is not None:
             if message.guild.voice_client.is_playing():
                 if queue["queue"]:
@@ -306,7 +327,8 @@ async def on_message(message):
                 current_song_duration = queue["current"]["duration"]
                 await message.channel.send(
                     embed=discord.Embed(
-                        color=0x00FF00, description=f"Playing `{current_song_name}` - `{current_song_duration}`!"
+                        color=0x00FF00,
+                        description=f"Playing `{current_song_name}` - `{current_song_duration}`!",
                     )
                 )
             else:
@@ -322,7 +344,21 @@ async def on_message(message):
     elif message.content == cmd("cyberpunkm"):
 
         def check_queue():
-            if queue.get("queue", None):
+            if queue.get("queue", None) or (
+                queue.get("queue", None) is not None and loop
+            ):
+                if loop:
+                    message.guild.voice_client.play(
+                        discord.FFmpegPCMAudio(
+                            queue["current"]["url"], **FFMPEG_OPTIONS
+                        ),
+                        after=lambda e: check_queue(),
+                    )
+                    message.guild.voice_client.source = discord.PCMVolumeTransformer(
+                        message.guild.voice_client.source
+                    )
+                    message.guild.voice_client.source.volume = current_volume
+                    return
                 next_song = queue["queue"].pop(0)
                 new_song_name = next_song["name"]
                 new_song_duration = next_song["duration"]
@@ -381,13 +417,19 @@ async def on_message(message):
 
                 queue["queue"].insert(0, queue["current"])
                 queue["queue"].insert(
-                    0, {"name": songname, "url": song_info["formats"][0]["url"], "duration": song_duration}
+                    0,
+                    {
+                        "name": songname,
+                        "url": song_info["formats"][0]["url"],
+                        "duration": song_duration,
+                    },
                 )
                 message.guild.voice_client.stop()
                 await _msg_priorizado.delete()
                 await message.channel.send(
                     embed=discord.Embed(
-                        color=0x00FF00, description=f"**Playing** `{songname}` - `{song_duration}`"
+                        color=0x00FF00,
+                        description=f"**Playing** `{songname}` - `{song_duration}`",
                     )
                 )
 
@@ -403,6 +445,7 @@ async def on_message(message):
         _voice_client = message.author.voice.channel
 
         if message.guild.voice_client is None:
+            loop = False
             await message.guild.change_voice_state(
                 channel=message.channel, self_deaf=True, self_mute=False
             )
@@ -438,14 +481,29 @@ async def on_message(message):
 
             await message.channel.send(
                 embed=discord.Embed(
-                    color=0x00FF00, description=f"**Playing** `{songname}` - `{song_duration}`"
+                    color=0x00FF00,
+                    description=f"**Playing** `{songname}` - `{song_duration}`",
                 )
             )
 
     elif message.content.startswith(cmd("play ")):
 
         def check_queue():
-            if queue.get("queue", None):
+            if queue.get("queue", None) or (
+                queue.get("queue", None) is not None and loop
+            ):
+                if loop:
+                    message.guild.voice_client.play(
+                        discord.FFmpegPCMAudio(
+                            queue["current"]["url"], **FFMPEG_OPTIONS
+                        ),
+                        after=lambda e: check_queue(),
+                    )
+                    message.guild.voice_client.source = discord.PCMVolumeTransformer(
+                        message.guild.voice_client.source
+                    )
+                    message.guild.voice_client.source.volume = current_volume
+                    return
                 next_song = queue["queue"].pop(0)
                 new_song_name = next_song["name"]
                 new_song_duration = next_song["duration"]
@@ -483,7 +541,6 @@ async def on_message(message):
                     except:
                         # an error happened sending the message
                         pass
-                    
 
         _arg = message.content.split(" ", 1)[1].strip()
 
@@ -496,8 +553,8 @@ async def on_message(message):
                     color=0x00FF00, description=f"**Searching** `{_arg}`..."
                 )
             )
-            yt = SearchVideos(_arg, offset = 1, mode = "json", max_results = 1)
-            _result = json.loads(yt.result())['search_result']
+            yt = SearchVideos(_arg, offset=1, mode="json", max_results=1)
+            _result = json.loads(yt.result())["search_result"]
 
             if not _result:
                 await searchingMessage.delete()
@@ -509,9 +566,9 @@ async def on_message(message):
                 )
                 return
             _result = _result[0]
-            song_name = _result['title']
-            song_duration = _result['duration']
-            song_url = _result['link']
+            song_name = _result["title"]
+            song_duration = _result["duration"]
+            song_url = _result["link"]
             with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
                 song_url = ydl.extract_info(song_url, download=False)
                 song_url = song_url["formats"][0]["url"]
@@ -525,7 +582,8 @@ async def on_message(message):
             await searchingMessage.delete()
             await message.channel.send(
                 embed=discord.Embed(
-                    color=0x00FF00, description=f"**Queued** `{song_name}` - `{song_duration}`"
+                    color=0x00FF00,
+                    description=f"**Queued** `{song_name}` - `{song_duration}`",
                 )
             )
             return
@@ -540,6 +598,7 @@ async def on_message(message):
         _voice_client = message.author.voice.channel
 
         if message.guild.voice_client is None:
+            loop = False
             await message.guild.change_voice_state(
                 channel=message.channel, self_deaf=True, self_mute=False
             )
@@ -556,8 +615,8 @@ async def on_message(message):
             )
         )
 
-        yt = SearchVideos(_arg, offset = 1, mode = "json", max_results = 1)
-        _result = json.loads(yt.result())['search_result']
+        yt = SearchVideos(_arg, offset=1, mode="json", max_results=1)
+        _result = json.loads(yt.result())["search_result"]
         if not _result:
             await searchingMessage.delete()
             await message.channel.send(
@@ -568,24 +627,22 @@ async def on_message(message):
             )
             return
         _result = _result[0]
-        song_name = _result['title']
-        song_duration = _result['duration']
-        song_url = _result['link']
+        song_name = _result["title"]
+        song_duration = _result["duration"]
+        song_url = _result["link"]
         with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
-                song_url = ydl.extract_info(song_url, download=False)
-                song_url = song_url["formats"][0]["url"]
+            song_url = ydl.extract_info(song_url, download=False)
+            song_url = song_url["formats"][0]["url"]
 
         if queue is None or queue.get("current", None) is None:
             queue = {"current": {}, "queue": []}
-            
+
         queue["current"]["name"] = song_name
         queue["current"]["duration"] = song_duration
         queue["current"]["url"] = song_url
 
         message.guild.voice_client.play(
-            discord.FFmpegPCMAudio(
-                song_url, **FFMPEG_OPTIONS
-            ),
+            discord.FFmpegPCMAudio(song_url, **FFMPEG_OPTIONS),
             after=lambda e: check_queue(),
         )
         message.guild.voice_client.source = discord.PCMVolumeTransformer(
@@ -596,7 +653,8 @@ async def on_message(message):
         await searchingMessage.delete()
         await message.channel.send(
             embed=discord.Embed(
-                color=0x00FF00, description=f"**Playing** `{song_name}` - `{song_duration}`"
+                color=0x00FF00,
+                description=f"**Playing** `{song_name}` - `{song_duration}`",
             )
         )
     elif message.content == cmd("stop"):
@@ -621,7 +679,9 @@ async def on_message(message):
             f"<@{user_id}> é {goy_percent_pre}.{goy_percent_pos}% goy! <:56781042_811112372584549_2847201:575829560285986816>"
         )
     elif message.content == cmd("cyberpunk"):
-        _to_cyberpunk = datetime.datetime(year=2020, month=11, day=19, hour=0, minute=1, second=0)
+        _to_cyberpunk = datetime.datetime(
+            year=2020, month=11, day=19, hour=0, minute=1, second=0
+        )
 
         _now = datetime.datetime.now()
 
