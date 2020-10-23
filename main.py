@@ -5,13 +5,14 @@ import consts
 import traceback
 import random
 import youtube_dl
-from youtube_search import YoutubeSearch
+from youtubesearchpython import SearchVideos
 import json
 import asyncio
 import get_dominant_color
 import os
 import ctypes
 import ctypes.util
+import datetime
 
 
 client = discord.Client()
@@ -41,7 +42,7 @@ async def on_message(message):
     if message.author == client.user or message.author.bot:
         return
 
-    if message.content.startswith(cmd("")) and message.channel.name != "comandos-bot":
+    if (message.content.startswith(cmd("")) and message.channel.name != "comandos-bot"):
         _msg = await message.channel.send(
             embed=discord.Embed(
                 color=0xFF0000,
@@ -84,8 +85,6 @@ async def on_message(message):
     else:
         caracteres = len(message.content) if len(message.content) <= 75 else 75
         _user = _users[0]
-        print(_user.xp)
-        print(_user.xp_needed)
         _user.xp += caracteres * consts.XP_PER_CHARACTER
 
         if _user.xp >= _user.xp_needed:
@@ -156,9 +155,6 @@ async def on_message(message):
                 title=f"Rank Goys",
                 desciption="",
             )
-            for role in message.guild.roles:
-                for member in role.members:
-                    print(member.name)
 
             for index, _user in enumerate(_all_users):
                 _user_roles = [
@@ -220,11 +216,12 @@ async def on_message(message):
     elif message.content == (cmd("queue")):
         if message.guild.voice_client is not None:
             if queue["queue"]:
-                _current = queue["current"]["name"]
-                _queue_list = f"Currently playing\n\t `{_current}`\n\nNext:\n"
-                _queue_list = "\n".join(
+                _current_name = queue["current"]["name"]
+                _current_duration = queue["current"]["duration"]
+                _queue_list = f"Currently playing\n\t `{_current_name}` - `{_current_duration}`\n\nNext:\n"
+                _queue_list += "\n".join(
                     [
-                        ("\t" + str(number + 1) + ". " + "`" + item["name"] + "`")
+                        ("\t" + str(number + 1) + ". " + "`" + item["name"] + "`" + " - " + "`" + item["duration"] + "`")
                         for number, item in enumerate(queue["queue"])
                     ]
                 )
@@ -252,11 +249,12 @@ async def on_message(message):
         if message.guild.voice_client is not None:
             if message.guild.voice_client.is_playing():
                 if queue["queue"]:
-                    new_song = queue["queue"][0]["name"]
+                    new_song_name = queue["queue"][0]["name"]
+                    new_song_duration = queue["queue"][0]["duration"]
                     await message.channel.send(
                         embed=discord.Embed(
                             color=0x00FF00,
-                            description=f"Song skipped! Now playing `{new_song}`",
+                            description=f"Song skipped! Now playing `{new_song_name}` - `{new_song_duration}`",
                         )
                     )
                 else:
@@ -304,10 +302,11 @@ async def on_message(message):
     elif message.content == (cmd("playing")):
         if message.guild.voice_client is not None:
             if message.guild.voice_client.is_playing():
-                current_song = queue["current"]["name"]
+                current_song_name = queue["current"]["name"]
+                current_song_duration = queue["current"]["duration"]
                 await message.channel.send(
                     embed=discord.Embed(
-                        color=0x00FF00, description=f"Playing `{current_song}`!"
+                        color=0x00FF00, description=f"Playing `{current_song_name}` - `{current_song_duration}`!"
                     )
                 )
             else:
@@ -320,12 +319,26 @@ async def on_message(message):
                     color=0xFF0000, description=f"GGoyBot not in voice channel!"
                 )
             )
-    elif message.content == cmd("cyberpunk"):
+    elif message.content == cmd("cyberpunkm"):
 
         def check_queue():
             if queue.get("queue", None):
                 next_song = queue["queue"].pop(0)
+                new_song_name = next_song["name"]
+                new_song_duration = next_song["duration"]
                 queue["current"] = next_song
+                coro = message.channel.send(
+                    embed=discord.Embed(
+                        color=0x00FF00,
+                        description=f"Now playing `{new_song_name}` - `{new_song_duration}`",
+                    )
+                )
+                fut = asyncio.run_coroutine_threadsafe(coro, client.loop)
+                try:
+                    fut.result()
+                except:
+                    # an error happened sending the message
+                    pass
 
                 message.guild.voice_client.play(
                     discord.FFmpegPCMAudio(next_song["url"], **FFMPEG_OPTIONS),
@@ -335,6 +348,18 @@ async def on_message(message):
                     message.guild.voice_client.source
                 )
                 message.guild.voice_client.source.volume = current_volume
+            else:
+                _voice_client = message.guild.voice_client
+                if _voice_client.is_connected():
+                    if queue:
+                        queue.clear()
+                    coro = _voice_client.disconnect()
+                    fut = asyncio.run_coroutine_threadsafe(coro, client.loop)
+                    try:
+                        fut.result()
+                    except:
+                        # an error happened sending the message
+                        pass
 
         if (
             message.guild.voice_client is not None
@@ -349,19 +374,20 @@ async def on_message(message):
             with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
                 song_info = ydl.extract_info(yt_url, download=False)
                 songname = song_info.get("title", None)
+                song_duration = song_info.get("duration", None)
 
                 if not queue.get("queue", None):
                     queue["queue"] = []
 
                 queue["queue"].insert(0, queue["current"])
                 queue["queue"].insert(
-                    0, {"name": songname, "url": song_info["formats"][0]["url"]}
+                    0, {"name": songname, "url": song_info["formats"][0]["url"], "duration": song_duration}
                 )
                 message.guild.voice_client.stop()
                 await _msg_priorizado.delete()
                 await message.channel.send(
                     embed=discord.Embed(
-                        color=0x00FF00, description=f"**Playing** `{songname}`"
+                        color=0x00FF00, description=f"**Playing** `{songname}` - `{song_duration}`"
                     )
                 )
 
@@ -391,10 +417,12 @@ async def on_message(message):
         with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
             song_info = ydl.extract_info(yt_url, download=False)
             songname = song_info.get("title", None)
+            song_duration = song_info.get("duration", None)
 
             if queue is None or queue.get("current", None) is None:
                 queue = {"current": {}, "queue": []}
             queue["current"]["name"] = songname
+            queue["current"]["duration"] = song_duration
             queue["current"]["url"] = song_info["formats"][0]["url"]
 
             message.guild.voice_client.play(
@@ -410,7 +438,7 @@ async def on_message(message):
 
             await message.channel.send(
                 embed=discord.Embed(
-                    color=0x00FF00, description=f"**Playing** `{songname}`"
+                    color=0x00FF00, description=f"**Playing** `{songname}` - `{song_duration}`"
                 )
             )
 
@@ -419,7 +447,21 @@ async def on_message(message):
         def check_queue():
             if queue.get("queue", None):
                 next_song = queue["queue"].pop(0)
+                new_song_name = next_song["name"]
+                new_song_duration = next_song["duration"]
                 queue["current"] = next_song
+                coro = message.channel.send(
+                    embed=discord.Embed(
+                        color=0x00FF00,
+                        description=f"Now playing `{new_song_name}` - `{new_song_duration}`",
+                    )
+                )
+                fut = asyncio.run_coroutine_threadsafe(coro, client.loop)
+                try:
+                    fut.result()
+                except:
+                    # an error happened sending the message
+                    pass
 
                 message.guild.voice_client.play(
                     discord.FFmpegPCMAudio(next_song["url"], **FFMPEG_OPTIONS),
@@ -429,6 +471,19 @@ async def on_message(message):
                     message.guild.voice_client.source
                 )
                 message.guild.voice_client.source.volume = current_volume
+            else:
+                _voice_client = message.guild.voice_client
+                if _voice_client.is_connected():
+                    if queue:
+                        queue.clear()
+                    coro = _voice_client.disconnect()
+                    fut = asyncio.run_coroutine_threadsafe(coro, client.loop)
+                    try:
+                        fut.result()
+                    except:
+                        # an error happened sending the message
+                        pass
+                    
 
         _arg = message.content.split(" ", 1)[1].strip()
 
@@ -441,28 +496,38 @@ async def on_message(message):
                     color=0x00FF00, description=f"**Searching** `{_arg}`..."
                 )
             )
+            yt = SearchVideos(_arg, offset = 1, mode = "json", max_results = 1)
+            _result = json.loads(yt.result())['search_result']
 
-            yt = YoutubeSearch(_arg, max_results=1).to_json()
-            yt_id = str(json.loads(yt)["videos"][0]["id"])
-            yt_url = "https://www.youtube.com/watch?v=" + yt_id
-            with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
-                song_info = ydl.extract_info(yt_url, download=False)
-                songname = song_info.get("title", None)
-
-                if not queue.get("queue", None):
-                    queue["queue"] = []
-
-                queue["queue"].append(
-                    {"name": songname, "url": song_info["formats"][0]["url"]}
-                )
-
+            if not _result:
                 await searchingMessage.delete()
                 await message.channel.send(
                     embed=discord.Embed(
-                        color=0x00FF00, description=f"**Queued** `{songname}`"
+                        color=0xFF0000,
+                        description=f"Song not found :(",
                     )
                 )
+                return
+            _result = _result[0]
+            song_name = _result['title']
+            song_duration = _result['duration']
+            song_url = _result['link']
+            with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
+                song_url = ydl.extract_info(song_url, download=False)
+                song_url = song_url["formats"][0]["url"]
+            if not queue.get("queue", None):
+                queue["queue"] = []
 
+            queue["queue"].append(
+                {"name": song_name, "url": song_url, "duration": song_duration}
+            )
+
+            await searchingMessage.delete()
+            await message.channel.send(
+                embed=discord.Embed(
+                    color=0x00FF00, description=f"**Queued** `{song_name}` - `{song_duration}`"
+                )
+            )
             return
         if message.author.voice is None:
             await message.channel.send(
@@ -490,36 +555,50 @@ async def on_message(message):
                 color=0x00FF00, description=f"**Searching** `{_arg}`..."
             )
         )
-        yt = YoutubeSearch(_arg, max_results=1).to_json()
-        yt_id = str(json.loads(yt)["videos"][0]["id"])
-        yt_url = "https://www.youtube.com/watch?v=" + yt_id
-        with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
-            song_info = ydl.extract_info(yt_url, download=False)
-            songname = song_info.get("title", None)
 
-            if queue is None or queue.get("current", None) is None:
-                queue = {"current": {}, "queue": []}
-            queue["current"]["name"] = songname
-            queue["current"]["url"] = song_info["formats"][0]["url"]
-
-            message.guild.voice_client.play(
-                discord.FFmpegPCMAudio(
-                    song_info["formats"][0]["url"], **FFMPEG_OPTIONS
-                ),
-                after=lambda e: check_queue(),
-            )
-            message.guild.voice_client.source = discord.PCMVolumeTransformer(
-                message.guild.voice_client.source
-            )
-            message.guild.voice_client.source.volume = current_volume
-
+        yt = SearchVideos(_arg, offset = 1, mode = "json", max_results = 1)
+        _result = json.loads(yt.result())['search_result']
+        if not _result:
             await searchingMessage.delete()
             await message.channel.send(
                 embed=discord.Embed(
-                    color=0x00FF00, description=f"**Playing** `{songname}`"
+                    color=0xFF0000,
+                    description=f"Song not found :(",
                 )
             )
+            return
+        _result = _result[0]
+        song_name = _result['title']
+        song_duration = _result['duration']
+        song_url = _result['link']
+        with youtube_dl.YoutubeDL(consts.YDL_OPTIONS) as ydl:
+                song_url = ydl.extract_info(song_url, download=False)
+                song_url = song_url["formats"][0]["url"]
 
+        if queue is None or queue.get("current", None) is None:
+            queue = {"current": {}, "queue": []}
+            
+        queue["current"]["name"] = song_name
+        queue["current"]["duration"] = song_duration
+        queue["current"]["url"] = song_url
+
+        message.guild.voice_client.play(
+            discord.FFmpegPCMAudio(
+                song_url, **FFMPEG_OPTIONS
+            ),
+            after=lambda e: check_queue(),
+        )
+        message.guild.voice_client.source = discord.PCMVolumeTransformer(
+            message.guild.voice_client.source
+        )
+        message.guild.voice_client.source.volume = current_volume
+
+        await searchingMessage.delete()
+        await message.channel.send(
+            embed=discord.Embed(
+                color=0x00FF00, description=f"**Playing** `{song_name}` - `{song_duration}`"
+            )
+        )
     elif message.content == cmd("stop"):
         _voice_client = message.guild.voice_client
         if _voice_client.is_connected():
@@ -541,6 +620,22 @@ async def on_message(message):
         await message.channel.send(
             f"<@{user_id}> é {goy_percent_pre}.{goy_percent_pos}% goy! <:56781042_811112372584549_2847201:575829560285986816>"
         )
+    elif message.content == cmd("cyberpunk"):
+        _to_cyberpunk = datetime.datetime(year=2020, month=11, day=19, hour=0, minute=1, second=0)
+
+        _now = datetime.datetime.now()
+
+        _remaining = _now - _to_cyberpunk
+        sec = _remaining.seconds
+        sec_value = sec % (24 * 3600)
+        hour_value = sec_value // 3600
+        sec_value %= 3600
+        _min = sec_value // 60
+        sec_value %= 60
+
+        msg = f"Tempo até o lançamento do cyberpunk {_remaining.days} dias, {hour_value} horas, {_min} minutos e {sec_value} segundos"
+        print(msg)
+        # await message.channel.send(msg)
     elif message.content == cmd("help"):
         _help = """
         `\level`
@@ -582,8 +677,11 @@ async def on_message(message):
         `\\resume`
         Continua a tocar uma música pausada anteriormente
 
-        `\cyberpunk`
+        `\cyberpunkm`
         Toca a música do cyberpunk independente da fila
+
+        `\cyberpunk`
+        Mostra o tempo restante até o lançamento do cyberpunk
         """
         await message.channel.send(
             embed=discord.Embed(color=0x00FF00, description=_help)
