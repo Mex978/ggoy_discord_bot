@@ -19,8 +19,8 @@ client = discord.Client()
 config.create_table()
 
 queue = {}
-loop = False
-current_volume = 0.5
+loop_times = -1
+current_volume = 0.2
 
 
 def cmd(str):
@@ -38,12 +38,26 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    global queue, current_volume, loop
+    global queue, current_volume, loop_times
 
     if message.author == client.user or message.author.bot:
         return
 
-    if message.content.startswith(cmd("")) and message.channel.name != "comandos-bot":
+    _allowed_in_channel_test = ['0188', '6234']
+    if message.channel.name == "channel-test" and (message.author.discriminator not in _allowed_in_channel_test):
+        _msg = await message.channel.send(
+            embed=discord.Embed(
+                color=0xFF0000,
+                description="Only the Developer and GGoyBot can interact here",
+            )
+        )
+        await asyncio.sleep(5)
+        await _msg.delete()
+        await message.delete()
+        return
+    elif message.channel.name == "channel-test" and (message.author.discriminator in _allowed_in_channel_test):
+        pass
+    elif message.content.startswith(cmd("")) and message.channel.name != "comandos-bot":
         _msg = await message.channel.send(
             embed=discord.Embed(
                 color=0xFF0000,
@@ -82,8 +96,8 @@ async def on_message(message):
             xp_needed=consts.INITIAL_XP_NEEDED,
         )
         _users = [_new_user]
-
-    else:
+    # else: # Gain xp typing commands
+    elif not message.content.startswith(cmd("")): # Gain xp typing not commands
         caracteres = len(message.content) if len(message.content) <= 75 else 75
         _user = _users[0]
         _user.xp += caracteres * consts.XP_PER_CHARACTER
@@ -176,11 +190,28 @@ async def on_message(message):
             print(traceback.print_exc())
 
             await message.channel.send(f"Error:\n```{error}```")
-    elif message.content == cmd("loop"):
-        loop = not loop
+    elif message.content.startswith(cmd("loop ")):
+        _arg = message.content.split(" ", 1)
+        if len(_arg) > 1:
+            _arg = message.content.split(" ", 1)[1].strip()
+        
+            try:
+                _arg = int(_arg)
+                if _arg < 0:
+                    raise Exception()
+                loop_times = _arg
+            except Exception:
+                await message.channel.send(
+                    embed=discord.Embed(
+                        color=0xFF0000, description="Invalid value"
+                    )
+                )
+            return
+
+        loop_times = 0 if loop_times != 0 else -1
         await message.channel.send(
             embed=discord.Embed(
-                color=0x00FF00, description=f"Loop option changed to `{loop}`"
+                color=0x00FF00, description=f"Loop option changed to `{False if loop_times == -1 else True}`"
             )
         )
         return
@@ -227,7 +258,8 @@ async def on_message(message):
             if queue["queue"]:
                 _current_name = queue["current"]["name"]
                 _current_duration = queue["current"]["duration"]
-                _queue_list = f"Currently playing\n\t `{_current_name}` - `{_current_duration}`\n\nNext:\n"
+                _loop_msg = " - On looping" if loop_times == 0 else f" - On loop for {loop_times} more time(s)" if loop_times > 0 else ""
+                _queue_list = f"Currently playing\n\t `{_current_name}` - `{_current_duration}`{_loop_msg}\n\nNext:\n"
                 _queue_list += "\n".join(
                     [
                         (
@@ -266,7 +298,7 @@ async def on_message(message):
                 )
             )
     elif message.content == (cmd("skip")):
-        loop = False
+        loop_times = -1
         if message.guild.voice_client is not None:
             if message.guild.voice_client.is_playing():
                 if queue["queue"]:
@@ -324,11 +356,12 @@ async def on_message(message):
         if message.guild.voice_client is not None:
             if message.guild.voice_client.is_playing():
                 current_song_name = queue["current"]["name"]
+                _loop_msg = " - On looping" if loop_times == 0 else f" - On loop for {loop_times} more time(s)" if loop_times > 0 else ""
                 current_song_duration = queue["current"]["duration"]
                 await message.channel.send(
                     embed=discord.Embed(
                         color=0x00FF00,
-                        description=f"Playing `{current_song_name}` - `{current_song_duration}`!",
+                        description=f"Playing `{current_song_name}` - `{current_song_duration}`{_loop_msg}!",
                     )
                 )
             else:
@@ -344,10 +377,14 @@ async def on_message(message):
     elif message.content == cmd("cyberpunkm"):
 
         def check_queue():
-            if queue.get("queue", None) or (
-                queue.get("queue", None) is not None and loop
-            ):
-                if loop:
+            global loop_times
+            if queue.get("queue", None) or (queue.get("queue", None) is not None and loop_times != -1):
+                if loop_times != -1:
+                    if loop_times > 0:
+                        if loop_times == 1:
+                            loop_times = -1
+                        else:
+                            loop_times -= 1
                     message.guild.voice_client.play(
                         discord.FFmpegPCMAudio(
                             queue["current"]["url"], **FFMPEG_OPTIONS
@@ -445,7 +482,7 @@ async def on_message(message):
         _voice_client = message.author.voice.channel
 
         if message.guild.voice_client is None:
-            loop = False
+            loop_times = -1
             await message.guild.change_voice_state(
                 channel=message.channel, self_deaf=True, self_mute=False
             )
@@ -489,10 +526,14 @@ async def on_message(message):
     elif message.content.startswith(cmd("play ")):
 
         def check_queue():
-            if queue.get("queue", None) or (
-                queue.get("queue", None) is not None and loop
-            ):
-                if loop:
+            global loop_times
+            if queue.get("queue", None) or (queue.get("queue", None) is not None and loop_times != -1):
+                if loop_times != -1:
+                    if loop_times > 0:
+                        if loop_times == 1:
+                            loop_times = -1
+                        else:
+                            loop_times -= 1
                     message.guild.voice_client.play(
                         discord.FFmpegPCMAudio(
                             queue["current"]["url"], **FFMPEG_OPTIONS
@@ -598,7 +639,7 @@ async def on_message(message):
         _voice_client = message.author.voice.channel
 
         if message.guild.voice_client is None:
-            loop = False
+            loop_times = -1
             await message.guild.change_voice_state(
                 channel=message.channel, self_deaf=True, self_mute=False
             )
@@ -685,17 +726,15 @@ async def on_message(message):
 
         _now = datetime.datetime.now()
 
-        _remaining = _now - _to_cyberpunk
-        sec = _remaining.seconds
-        sec_value = sec % (24 * 3600)
-        hour_value = sec_value // 3600
-        sec_value %= 3600
-        _min = sec_value // 60
-        sec_value %= 60
+        _remaining = _to_cyberpunk - _now
 
-        msg = f"Tempo até o lançamento do cyberpunk {_remaining.days} dias, {hour_value} horas, {_min} minutos e {sec_value} segundos"
-        print(msg)
-        # await message.channel.send(msg)
+        days, seconds = _remaining.days, _remaining.seconds
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        seconds = seconds % 60
+
+        msg = f"Tempo até o lançamento do cyberpunk {(days)} dias, {hours} horas, {minutes} minutos e {seconds} segundos"
+        await message.channel.send(msg)
     elif message.content == cmd("help"):
         _help = """
         `\level`
