@@ -2,8 +2,9 @@ discord.py
 pydotenv
 peewee
 discord.py[voice]
-youtube_dl
 youtube_search
 scipy
 pillow
 PyNaCl
+python-twitch-client
+pafy
