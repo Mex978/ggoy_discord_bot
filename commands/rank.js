@@ -40,7 +40,7 @@ export class Rank {
         output: "./card.png",
         html: cardHtml,
         quality: 100,
-        transparent: true,
+        puppeteerArgs: { args: ["--no-sandbox"] },
       }).then(() => {
         const attachment = new MessageAttachment("./card.png");
         this.message.channel.send(attachment);
