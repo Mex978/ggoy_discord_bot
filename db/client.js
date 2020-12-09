@@ -9,7 +9,7 @@ export class DataBase {
     let sequelize;
     sequelize = new Sequelize({
       dialect: "sqlite",
-      storage: "./../db/users.sqlite",
+      storage: "./users.sqlite",
       logging: false,
       transactionType: "IMMEDIATE",
     });
