@@ -310,8 +310,8 @@ export class Music {
 
     if (
       !serverQueue ||
-      serverQueue.connection ||
-      serverQueue.connection.dispatcher
+      !serverQueue.connection ||
+      !serverQueue.connection.dispatcher
     ) {
       // Creating the contract for our queue
       const queueContruct = {
