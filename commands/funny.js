@@ -68,8 +68,8 @@ export class Funny {
 
         let times = [];
 
-        if (days.length > 0) times.push(days);
         if (months.length > 0) times.push(months);
+        if (days.length > 0) times.push(days);
         if (hours.length > 0) times.push(hours);
         if (minutes.length > 0) times.push(minutes);
         if (seconds.length > 0) times.push(seconds);

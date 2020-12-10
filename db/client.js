@@ -1,36 +1,33 @@
-import { Sequelize } from "sequelize";
+import sqz from "sequelize";
 import { INITIAL_XP_NEEDED } from "./../config.js";
 
 export class DataBase {
   constructor() {
     this.user = this.initDb();
   }
+
   initDb() {
     let sequelize;
-    sequelize = new Sequelize({
-      dialect: "sqlite",
-      storage: "./users.sqlite",
-      logging: false,
-      transactionType: "IMMEDIATE",
-    });
+    console.log(process.env.DATABASE_URL);
+    sequelize = new sqz.Sequelize(process.env.DATABASE_URL);
 
     var User = sequelize.define(
       "user",
       {
         userId: {
-          type: Sequelize.INTEGER,
+          type: sqz.DataTypes.BIGINT,
           field: "user_id",
         },
         level: {
-          type: Sequelize.INTEGER,
+          type: sqz.DataTypes.INTEGER,
           field: "level",
         },
         xp: {
-          type: Sequelize.FLOAT,
+          type: sqz.DataTypes.FLOAT,
           field: "xp",
         },
         xpNeeded: {
-          type: Sequelize.FLOAT,
+          type: sqz.DataTypes.FLOAT,
           field: "xp_needed",
         },
       },
@@ -39,7 +36,7 @@ export class DataBase {
       }
     );
 
-    User.sync();
+    User.sync({ force: true });
     return User;
   }
 
