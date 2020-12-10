@@ -36,9 +36,9 @@ client.on("message", async function (message) {
     } else if (FUNNY_COMMANDS.includes(command)) {
       new Funny(message).parseCommand();
     }
+  } else {
+    repository.manageXp(message);
   }
-
-  repository.manageXp(message);
 });
 
 client.once("reconnecting", () => {
