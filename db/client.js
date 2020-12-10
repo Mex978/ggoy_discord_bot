@@ -36,7 +36,7 @@ export class DataBase {
       }
     );
 
-    User.sync({ force: true });
+    User.sync();
     return User;
   }
 
