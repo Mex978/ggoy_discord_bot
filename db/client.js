@@ -8,7 +8,9 @@ export class DataBase {
 
   initDb() {
     let sequelize;
-    sequelize = new sqz.Sequelize(process.env.DATABASE_URL);
+    sequelize = new sqz.Sequelize(process.env.DATABASE_URL, {
+      logging: false,
+    });
 
     var User = sequelize.define(
       "user",
@@ -29,13 +31,37 @@ export class DataBase {
           type: sqz.DataTypes.FLOAT,
           field: "xp_needed",
         },
+        cuckValue: {
+          type: sqz.DataTypes.FLOAT,
+          field: "cuck_value",
+        },
+        fidalgoValue: {
+          type: sqz.DataTypes.FLOAT,
+          field: "fidalgo_value",
+        },
+        goyValue: {
+          type: sqz.DataTypes.FLOAT,
+          field: "goy_value",
+        },
+        cuckChangedDate: {
+          type: sqz.DataTypes.DATE,
+          field: "cuck_changed_date",
+        },
+        goyChangedDate: {
+          type: sqz.DataTypes.DATE,
+          field: "goy_changed_date",
+        },
+        fidalgoChangedDate: {
+          type: sqz.DataTypes.DATE,
+          field: "fidalgo_changed_date",
+        },
       },
       {
         freezeTableName: true, // Model tableName will be the same as the model name
       }
     );
 
-    User.sync();
+    User.sync({ alter: true });
     return User;
   }
 

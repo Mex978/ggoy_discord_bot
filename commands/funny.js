@@ -3,11 +3,15 @@ import {
   createSuccessEmbed,
   parseMessageToCommand,
 } from "./../utils.js";
-import { Message, MessageEmbed } from "discord.js";
+import { Message } from "discord.js";
 import timediff from "timediff";
+import { Repository } from "../core/xp_manager.js";
 
 export class Funny {
-  constructor(msg) {
+  constructor(msg, repo) {
+    this.repository = new Repository();
+    Object.assign(this.repository, repo);
+
     this.message = new Message();
     Object.assign(this.message, msg);
   }
@@ -23,16 +27,64 @@ export class Funny {
   }
 
   my_type_level(type) {
-    const value = Math.random() * 100;
-    this.message.channel.send(
-      createSuccessEmbed(
-        `Você está ${value.toFixed(
-          2
-        )}% ${type}! <:56781042_811112372584549_2847201:575829560285986816>`
-      )
-        .setTitle(this.message.author.username)
-        .setThumbnail(this.message.author.avatarURL())
-    );
+    this.repository.db.getUser(this.message.author.id).then((result) => {
+      const dateChanged =
+        type === "cuck"
+          ? result[0].get("cuckChangedDate")
+          : type === "goy"
+          ? result[0].get("goyChangedDate")
+          : result[0].get("fidalgoChangedDate");
+
+      const currentValue =
+        type === "cuck"
+          ? result[0].get("cuckValue")
+          : type === "goy"
+          ? result[0].get("goyValue")
+          : result[0].get("fidalgoValue");
+
+      const now = new Date();
+      now.setHours(-3);
+      now.setMinutes(0);
+      now.setSeconds(0);
+      now.setMilliseconds(0);
+
+      var value;
+      if (dateChanged == null || now > dateChanged) {
+        value = Math.random() * 100;
+        value = parseFloat(value.toFixed(2));
+      } else {
+        value = currentValue;
+      }
+
+      this.repository.db.user
+        .findOne({ where: { userId: this.message.author.id } })
+        .then(async (user) => {
+          if (!user) {
+            console.log("error");
+            return;
+          }
+
+          if (type === "cuck") {
+            user.cuckValue = value;
+            user.cuckChangedDate = now;
+          } else if (type === "goy") {
+            user.goyValue = value;
+            user.goyChangedDate = now;
+          } else if (type === "fidalgo") {
+            user.fidalgoValue = value;
+            user.fidalgoChangedDate = now;
+          }
+          user.save();
+        });
+
+      this.message.channel.send(
+        createSuccessEmbed(
+          `Você está ${value}% ${type}! <:56781042_811112372584549_2847201:575829560285986816> hoje!`
+        )
+          .setTitle(this.message.author.username)
+          .setThumbnail(this.message.author.avatarURL())
+      );
+    });
   }
 
   timerTo(msg, date) {

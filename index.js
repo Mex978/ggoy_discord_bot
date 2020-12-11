@@ -41,7 +41,7 @@ client.on("message", async function (message) {
     } else if (MUSIC_COMMANDS.includes(command)) {
       new Music(message, repository).parseCommand();
     } else if (FUNNY_COMMANDS.includes(command)) {
-      new Funny(message).parseCommand();
+      new Funny(message, repository).parseCommand();
     }
   } else {
     repository.manageXp(message);
