@@ -22,20 +22,37 @@ export class Repository {
       let level = result[0].get("level");
       let xp = result[0].get("xp");
       let xpNeeded = result[0].get("xpNeeded");
+      let xpChangedDate = result[0].get("xpChangedDate");
 
-      let caracteres =
-        message.content.length <= 75 ? message.content.length : 75;
-      xp += caracteres * XP_PER_CHARACTER;
+      const now = new Date();
+      now.setMilliseconds(0);
 
-      if (xp >= xpNeeded) {
-        xp = 0.0;
-        xpNeeded += xpNeeded * NEXT_LEVEL_XP_FACTOR;
-        level += 1;
+      const calculateXp = () => {
+        let caracteres =
+          message.content.length <= 75 ? message.content.length : 75;
+        xp += caracteres * XP_PER_CHARACTER;
+        xpChangedDate = now;
 
-        message.channel.send(`<@${userId}> subiu para o nível ${level}`);
+        if (xp >= xpNeeded) {
+          xp = 0.0;
+          xpNeeded += xpNeeded * NEXT_LEVEL_XP_FACTOR;
+          level += 1;
+
+          message.channel.send(`<@${userId}> subiu para o nível ${level}`);
+        }
+      };
+
+      if (xpChangedDate != null) {
+        const timeDiff = (now - xpChangedDate) / 1000;
+
+        if (timeDiff >= 30) {
+          calculateXp();
+        }
+      } else {
+        calculateXp();
       }
 
-      this.db.updateUser(userId, level, xp, xpNeeded);
+      this.db.updateUser(userId, level, xp, xpNeeded, xpChangedDate);
     });
   };
 }

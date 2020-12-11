@@ -55,6 +55,10 @@ export class DataBase {
           type: sqz.DataTypes.DATE,
           field: "fidalgo_changed_date",
         },
+        xpChangedDate: {
+          type: sqz.DataTypes.DATE,
+          field: "xp_changed_date",
+        },
       },
       {
         freezeTableName: true, // Model tableName will be the same as the model name
@@ -76,7 +80,7 @@ export class DataBase {
     });
   }
 
-  updateUser(userId, level, xp, xpNeeded) {
+  updateUser(userId, level, xp, xpNeeded, xpChangedDate) {
     this.user.findOne({ where: { userId: userId } }).then((user) => {
       if (!user) {
         console.log("error");
@@ -86,6 +90,7 @@ export class DataBase {
       user.level = level;
       user.xp = xp;
       user.xpNeeded = xpNeeded;
+      user.xpChangedDate = xpChangedDate;
       user.save();
     });
   }
