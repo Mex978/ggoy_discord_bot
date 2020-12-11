@@ -14,11 +14,7 @@ export class Filters {
     if (this.isDeveloper()) {
       return false;
     }
-    return (
-      this.developerFilter() ||
-      this.botFilter() ||
-      this.channelToCommandsFilter()
-    );
+    return this.developerFilter() || this.botFilter();
   }
 
   botFilter() {
@@ -51,32 +47,34 @@ export class Filters {
   }
 
   channelToCommandsFilter() {
-    if (
-      this.message.content.startsWith(PREFIX) &&
-      this.message.channel.name != "comandos-bot" &&
-      this.message.channel.name != "chat-dos-bots"
-    ) {
-      return this.message.channel
-        .send(
-          createErrorEmbed(
-            "Commands not available in that text channel, please type in the `commandos-bot`"
-          )
-        )
-        .then((msg) => {
-          setTimeout(async () => {
-            await msg.delete();
-            await this.message.delete();
-          }, TIMER);
+    // if (
+    //   this.message.content.startsWith(PREFIX) &&
+    //   this.message.channel.name != "comandos-bot" &&
+    //   this.message.channel.name != "chat-dos-bots"
+    // ) {
+    //   return this.message.channel
+    //     .send(
+    //       createErrorEmbed(
+    //         "Commands not available in that text channel, please type in the `commandos-bot`"
+    //       )
+    //     )
+    //     .then((msg) => {
+    //       setTimeout(async () => {
+    //         await msg.delete();
+    //         await this.message.delete();
+    //       }, TIMER);
 
-          return true;
-        });
-    } else if (
+    //       return true;
+    //     });
+    // } else
+    if (
       !this.message.content.startsWith(PREFIX) &&
       !this.message.content.startsWith("!") &&
       !this.message.content.startsWith("-") &&
       !this.message.content.startsWith("_") &&
       !this.message.content.startsWith("/") &&
-      this.message.channel.name == "comandos-bot"
+      !this.message.content.startsWith("$") &&
+      this.message.channel.name.includes("bot")
     ) {
       return this.message.channel
         .send(createErrorEmbed("Only commands are available on this channel"))

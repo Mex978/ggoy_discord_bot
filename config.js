@@ -26,6 +26,7 @@ export const MUSIC_COMMANDS = [
   // "pause",
   // "resume",
 ];
+export const ADMIN_COMMANDS = ["setxp"];
 export const NEXT_LEVEL_XP_FACTOR = 1.75;
 export const INITIAL_XP_NEEDED = 22.0;
 export const XP_PER_CHARACTER = 0.2;

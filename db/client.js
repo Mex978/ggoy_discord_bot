@@ -8,7 +8,6 @@ export class DataBase {
 
   initDb() {
     let sequelize;
-    console.log(process.env.DATABASE_URL);
     sequelize = new sqz.Sequelize(process.env.DATABASE_URL);
 
     var User = sequelize.define(

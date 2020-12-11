@@ -15,11 +15,8 @@ export class Repository {
     return { level, xp, xpNeeded };
   };
 
-  manageXp = (message) => {
-    const newMessage = new Message();
-    Object.assign(newMessage, message);
-
-    let userId = newMessage.author.id;
+  manageXp = (message = new Message()) => {
+    let userId = message.author.id;
 
     this.db.getUser(userId).then((result) => {
       let level = result[0].get("level");
@@ -27,7 +24,7 @@ export class Repository {
       let xpNeeded = result[0].get("xpNeeded");
 
       let caracteres =
-        newMessage.content.length <= 75 ? newMessage.content.length : 75;
+        message.content.length <= 75 ? message.content.length : 75;
       xp += caracteres * XP_PER_CHARACTER;
 
       if (xp >= xpNeeded) {
@@ -35,7 +32,7 @@ export class Repository {
         xpNeeded += xpNeeded * NEXT_LEVEL_XP_FACTOR;
         level += 1;
 
-        newMessage.channel.send(`<@${userId}> subiu para o nível ${level}`);
+        message.channel.send(`<@${userId}> subiu para o nível ${level}`);
       }
 
       this.db.updateUser(userId, level, xp, xpNeeded);

@@ -1,4 +1,4 @@
-import { MessageEmbed } from "discord.js";
+import { Message, MessageEmbed } from "discord.js";
 import { PREFIX } from "./config.js";
 
 export const createErrorEmbed = (content) =>
@@ -7,7 +7,7 @@ export const createErrorEmbed = (content) =>
 export const createSuccessEmbed = (content) =>
   new MessageEmbed().setColor("#00FF00").setDescription(content);
 
-export const parseMessageToCommand = (message) => {
+export const parseMessageToCommand = (message = new Message()) => {
   const commandBody = message.content.slice(PREFIX.length);
   const args = commandBody.split(" ");
   const arg = args.slice(1).join(" ");
