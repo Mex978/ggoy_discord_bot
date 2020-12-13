@@ -85,7 +85,7 @@ client.on("message", async function (message) {
       new Lives(message, twListener).parseCommand();
     }
   } else {
-    // repository.manageXp(message);
+    repository.manageXp(message);
   }
 });
 
