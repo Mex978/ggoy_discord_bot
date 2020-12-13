@@ -20,33 +20,28 @@ import { Lives } from "./commands/lives.js";
 import { DataBase } from "./db/client.js";
 
 const client = new Client({ disableMentions: "none" });
-let liveChannel;
 
-const onTurnOnLive = (streamName, streamUrl, streamPreview) => {
-  if (liveChannel) {
-    const channel = client.channels.cache.find(
-      (channel) => channel.id === liveChannel
-    );
-    channel.send(
-      createSuccessEmbed(
-        `@everyone ${streamName} is now \`online\`\n${streamUrl}`
-      )
-        .setImage(streamPreview)
-        .setTitle("Live notification")
-    );
-  }
+const onTurnOnLive = (liveChannel, streamName, streamUrl, streamPreview) => {
+  const channel = client.channels.cache.find(
+    (channel) => channel.id === liveChannel
+  );
+  channel.send(
+    createSuccessEmbed(
+      `@everyone ${streamName} is now \`online\`\n${streamUrl}`
+    )
+      .setImage(streamPreview)
+      .setTitle("Live notification")
+  );
 };
-const onTurnOffLive = (streamName) => {
-  if (liveChannel) {
-    const channel = client.channels.cache.find(
-      (channel) => channel.id === liveChannel
-    );
-    channel.send(
-      createSuccessEmbed(`${streamName} is now \`offline\``).setTitle(
-        "Live notification"
-      )
-    );
-  }
+const onTurnOffLive = (liveChannel, streamName) => {
+  const channel = client.channels.cache.find(
+    (channel) => channel.id === liveChannel
+  );
+  channel.send(
+    createSuccessEmbed(`${streamName} is now \`offline\``).setTitle(
+      "Live notification"
+    )
+  );
 };
 
 let repository;
@@ -68,15 +63,6 @@ client.on("ready", () => {
     status: "online",
   });
 
-  client.guilds.cache.forEach((g) => {
-    if (g.name == "Aincrad")
-      g.channels.cache.forEach((c) => {
-        if (c.name === "regras") {
-          liveChannel = c.id;
-        }
-      });
-  });
-
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
@@ -87,7 +73,6 @@ client.on("message", async function (message) {
 
   if (message.content.startsWith(PREFIX)) {
     const { command } = parseMessageToCommand(message);
-
     if (ADMIN_COMMANDS.includes(command)) {
       admin.parseCommand(message);
     } else if (RANK_COMMANDS.includes(command)) {

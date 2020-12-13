@@ -18,7 +18,14 @@ export class Lives {
     if (command === "live") {
       const channels = arg.split(" ");
       this.addChannel(channels);
+    } else if (command === "listenHere") {
+      this.listenHere();
     }
+  }
+
+  listenHere() {
+    this.repository.liveChannel = this.message.channel.id;
+    console.log(this.repository.liveChannel);
   }
 
   addChannel(channels = new Array()) {

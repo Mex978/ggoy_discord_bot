@@ -5,8 +5,10 @@ export class TwitchListener {
   constructor(
     database = new DataBase(),
     onTurnOnLive = new Function(),
-    onTurnOffLive = new Function()
+    onTurnOffLive = new Function(),
+    liveChannel
   ) {
+    this.liveChannel = liveChannel;
     this.onTurnOffLive = onTurnOffLive;
     this.onTurnOnLive = onTurnOnLive;
     this.baseUrl = "https://api.twitch.tv/kraken";
@@ -108,17 +110,26 @@ export class TwitchListener {
 
             if (streamData == null || streamData.stream == null) {
               if (channel.inLive) {
-                this.onTurnOffLive(channel.name);
-                this.changeChannelState(channel);
+                if (this.liveChannel) {
+                  this.onTurnOffLive(this.liveChannel, channel.name);
+                  this.changeChannelState(channel);
+                }
               }
               resolve(null);
             } else {
               if (!channel.inLive) {
-                const streamName = streamData.stream.channel.display_name;
-                const streamUrl = streamData.stream.channel.url;
-                const streamPreview = streamData.stream.preview.large;
-                this.onTurnOnLive(streamName, streamUrl, streamPreview);
-                this.changeChannelState(channel);
+                if (this.liveChannel) {
+                  const streamName = streamData.stream.channel.display_name;
+                  const streamUrl = streamData.stream.channel.url;
+                  const streamPreview = streamData.stream.preview.large;
+                  this.onTurnOnLive(
+                    this.liveChannel,
+                    streamName,
+                    streamUrl,
+                    streamPreview
+                  );
+                  this.changeChannelState(channel);
+                }
               }
               resolve(true);
             }

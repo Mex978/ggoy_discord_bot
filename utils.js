@@ -11,7 +11,7 @@ export const parseMessageToCommand = (message = new Message()) => {
   const commandBody = message.content.slice(PREFIX.length);
   const args = commandBody.split(" ");
   const arg = args.slice(1).join(" ");
-  const command = args.shift().toLowerCase();
+  const command = args.shift();
 
   return { command, arg };
 };
