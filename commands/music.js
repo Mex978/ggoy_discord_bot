@@ -6,14 +6,14 @@ import {
 import { Message, MessageEmbed } from "discord.js";
 import { queue, VOLUME } from "./../config.js";
 import ytdl from "ytdl-core";
-import { Repository } from "./../core/xp_manager.js";
+import { XpManager } from "./../core/xp_manager.js";
 import yts from "yt-search";
 
 export class Music {
   constructor(msg, repo) {
     this.initialVolume = VOLUME;
 
-    this.repository = new Repository();
+    this.repository = new XpManager();
     Object.assign(this.repository, repo);
 
     this.message = new Message();

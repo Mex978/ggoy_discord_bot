@@ -1,10 +1,10 @@
 import { parseMessageToCommand, createErrorEmbed } from "./../utils.js";
 import { Message } from "discord.js";
-import { Repository } from "../core/xp_manager.js";
+import { XpManager } from "../core/xp_manager.js";
 import { NEXT_LEVEL_XP_FACTOR } from "./../config.js";
 
 export class Admin {
-  constructor(repo = new Repository()) {
+  constructor(repo = new XpManager()) {
     this.repository = repo;
   }
 

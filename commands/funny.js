@@ -5,11 +5,11 @@ import {
 } from "./../utils.js";
 import { Message } from "discord.js";
 import timediff from "timediff";
-import { Repository } from "../core/xp_manager.js";
+import { XpManager } from "../core/xp_manager.js";
 
 export class Funny {
   constructor(msg, repo) {
-    this.repository = new Repository();
+    this.repository = new XpManager();
     Object.assign(this.repository, repo);
 
     this.message = new Message();

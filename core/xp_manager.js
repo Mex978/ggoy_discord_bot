@@ -1,11 +1,11 @@
-import { DataBase } from "./../db/client.js";
 import { Message } from "discord.js";
 import { XP_PER_CHARACTER, NEXT_LEVEL_XP_FACTOR } from "./../config.js";
+import { DataBase } from "../db/client.js";
 
-export class Repository {
-  init = async () => {
-    this.db = new DataBase();
-  };
+export class XpManager {
+  constructor(database = new DataBase()) {
+    this.db = database;
+  }
 
   getUserInfo = async (userId) => {
     const user = await this.db.getUser(userId);

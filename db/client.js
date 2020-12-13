@@ -1,9 +1,11 @@
 import sqz from "sequelize";
-import { INITIAL_XP_NEEDED } from "./../config.js";
+import { INITIAL_XP_NEEDED } from "../config.js";
 
 export class DataBase {
   constructor() {
-    this.user = this.initDb();
+    const { User, Lives } = this.initDb();
+    this.users = User;
+    this.lives = Lives;
   }
 
   initDb() {
@@ -65,12 +67,31 @@ export class DataBase {
       }
     );
 
-    User.sync({ alter: true });
-    return User;
+    var Lives = sequelize.define(
+      "lives",
+      {
+        channelName: {
+          type: sqz.DataTypes.STRING,
+          field: "channel_name",
+        },
+        channelId: {
+          type: sqz.DataTypes.STRING,
+          field: "channel_id",
+        },
+      },
+      {
+        freezeTableName: true, // Model tableName will be the same as the model name
+      }
+    );
+
+    User.sync();
+    Lives.sync();
+
+    return { User, Lives };
   }
 
   getUser(userId) {
-    return this.user.findOrCreate({
+    return this.users.findOrCreate({
       where: { userId: userId },
       defaults: {
         level: 1,
@@ -81,7 +102,7 @@ export class DataBase {
   }
 
   updateUser(userId, level, xp, xpNeeded, xpChangedDate) {
-    this.user.findOne({ where: { userId: userId } }).then((user) => {
+    this.users.findOne({ where: { userId: userId } }).then((user) => {
       if (!user) {
         console.log("error");
         return;

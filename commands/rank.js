@@ -1,12 +1,12 @@
 import { parseMessageToCommand, getCardHtml } from "./../utils.js";
 import { Message, MessageAttachment } from "discord.js";
 import { CUSTOM_FONT } from "./../config.js";
-import { Repository } from "../core/xp_manager.js";
+import { XpManager } from "../core/xp_manager.js";
 import nodeHtmlToImage from "node-html-to-image";
 
 export class Rank {
   constructor(msg, repo) {
-    this.repository = new Repository();
+    this.repository = new XpManager();
     Object.assign(this.repository, repo);
 
     this.message = new Message();
