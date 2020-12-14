@@ -1,5 +1,6 @@
 import https from "https";
 import { DataBase } from "../db/client.js";
+import axios from "axios";
 
 export class TwitchListener {
   constructor(
@@ -41,17 +42,17 @@ export class TwitchListener {
     });
   }
 
-  changeChannelState(channel) {
+  changeChannelState(channel, value) {
     const index = this.lives.indexOf(channel);
-    this.lives[index].inLive = !this.lives[index].inLive;
+    this.lives[index].inLive = value;
   }
 
   _initListener() {
-    setInterval(() => {
-      this.lives.forEach((live) => {
-        this.getChannelStatus(live);
-      });
-    }, 1000);
+    setInterval(async () => {
+      for (const live of this.lives) {
+        await this.getChannelStatus(live);
+      }
+    }, 5000);
   }
 
   getChannelId(channelName) {
@@ -78,6 +79,7 @@ export class TwitchListener {
                   resolve(null);
                 } else {
                   this.lives.push({
+                    name: model.get("channelName"),
                     id: model.get("channelId"),
                     inLive: false,
                   });
@@ -96,49 +98,44 @@ export class TwitchListener {
     });
   }
 
-  getChannelStatus(channel) {
-    return new Promise((resolve, reject) => {
-      let data = "";
-      https
-        .get(`${this.baseUrl}/streams/${channel.id}`, this.headers, (resp) => {
-          resp.on("data", (body) => {
-            data += body;
-          });
+  getChannelStatus = (channel) =>
+    new Promise((resolve, reject) => {
+      const liveChannel = this.liveChannel;
 
-          resp.on("end", () => {
-            const streamData = JSON.parse(data);
+      axios
+        .get(`${this.baseUrl}/streams/${channel.id}`, this.headers)
+        .then((response) => {
+          const streamData = response.data;
 
-            if (streamData == null || streamData.stream == null) {
-              if (channel.inLive) {
-                if (this.liveChannel) {
-                  this.onTurnOffLive(this.liveChannel, channel.name);
-                  this.changeChannelState(channel);
-                }
+          if (streamData == null || streamData.stream == null) {
+            if (channel.inLive) {
+              if (liveChannel) {
+                this.changeChannelState(channel, false);
+                this.onTurnOffLive(liveChannel, channel.name);
               }
-              resolve(null);
-            } else {
-              if (!channel.inLive) {
-                if (this.liveChannel) {
-                  const streamName = streamData.stream.channel.display_name;
-                  const streamUrl = streamData.stream.channel.url;
-                  const streamPreview = streamData.stream.preview.large;
-                  this.onTurnOnLive(
-                    this.liveChannel,
-                    streamName,
-                    streamUrl,
-                    streamPreview
-                  );
-                  this.changeChannelState(channel);
-                }
-              }
-              resolve(true);
             }
-          });
+          } else {
+            if (!channel.inLive) {
+              if (liveChannel) {
+                const streamName = streamData.stream.channel.display_name;
+                const streamUrl = streamData.stream.channel.url;
+                const streamPreview = streamData.stream.preview.large;
+                this.changeChannelState(channel, true);
+                this.onTurnOnLive(
+                  liveChannel,
+                  streamName,
+                  streamUrl,
+                  streamPreview
+                );
+              }
+            }
+          }
+          resolve();
         })
-        .on("error", (err) => {
-          console.log("Error: " + err.message);
-          reject(err);
-        });
+        .catch(function (error) {
+          console.log(error);
+          reject(error);
+        })
+        .then(function () {});
     });
-  }
 }
