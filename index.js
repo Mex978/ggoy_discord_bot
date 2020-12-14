@@ -18,6 +18,7 @@ import { Filters } from "./core/filters.js";
 import { Admin } from "./commands/admin.js";
 import { Lives } from "./commands/lives.js";
 import { DataBase } from "./db/client.js";
+import { Help } from "./commands/help.js";
 
 const client = new Client({ disableMentions: "none" });
 
@@ -83,6 +84,8 @@ client.on("message", async function (message) {
       new Funny(message, repository).parseCommand();
     } else if (TWITCH_COMMANDS.includes(command)) {
       new Lives(message, twListener).parseCommand();
+    } else if (command == "help") {
+      Help.showHelp(message);
     }
   } else {
     repository.manageXp(message);
