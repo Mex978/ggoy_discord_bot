@@ -56,7 +56,7 @@ export class Funny {
         value = currentValue;
       }
 
-      this.repository.db.user
+      this.repository.db.users
         .findOne({ where: { userId: this.message.author.id } })
         .then(async (user) => {
           if (!user) {
