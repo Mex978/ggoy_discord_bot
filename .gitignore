@@ -1,4 +1,8 @@
+node_modules
+build
+npm-debug.log
 .env
+.DS_Store
+*.png
 .vscode
-*.db
-__pycache__
+/db/*.db
