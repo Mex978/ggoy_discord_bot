@@ -12,6 +12,7 @@
   "type": "module",
   "dependencies": {
     "@discordjs/opus": "^0.4.0",
+    "opusscript": "^0.0.7",
     "axios": "^0.21.0",
     "discord-music-player": "^6.4.1",
     "discord.js": "^12.5.1",
@@ -22,8 +23,6 @@
     "nodemon": "^2.0.6",
     "pg": "^8.5.1",
     "require": "^0.4.4",
-    "sequelize": "^6.3.5",
-    "sqlite3": "^5.0.0",
     "timediff": "^1.1.1",
     "yt-search": "^2.5.1",
     "ytdl-core": "^4.4.5"
