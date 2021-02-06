@@ -142,7 +142,7 @@ export class Music {
 
           return message.channel.send(
             createSuccessEmbed(
-              `Song [${song.name}](${song.url}) was added to the queue! - <@${message.author.id}`
+              `Song [${song.name}](${song.url}) was added to the queue! - <@${message.author.id}>`
             )
           );
         })
@@ -278,7 +278,7 @@ export class Music {
       for (const [index, element] of songs.slice(1).entries()) {
         queueList += `\t${index + 1}. \`${element.name}\` - \`${
           element.duration
-        }\``;
+        }\`\n`;
       }
       return message.channel.send(
         new MessageEmbed()
