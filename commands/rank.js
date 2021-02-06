@@ -5,12 +5,10 @@ import { XpManager } from "../core/xp_manager.js";
 import nodeHtmlToImage from "node-html-to-image";
 
 export class Rank {
-  constructor(msg, repo) {
-    this.repository = new XpManager();
-    Object.assign(this.repository, repo);
+  constructor(msg = new Message(), repo = new XpManager()) {
+    this.repository = repo;
 
-    this.message = new Message();
-    Object.assign(this.message, msg);
+    this.message = msg;
   }
 
   parseCommand() {
@@ -26,6 +24,8 @@ export class Rank {
       const name = this.message.author.username;
       const discriminator = this.message.author.discriminator;
       const mainRole = this.message.member.roles.cache.array()[0].name;
+      // const rank = this.repository.getUserRank(this.message.author.id);
+
       const cardHtml = getCardHtml(
         name,
         discriminator,
@@ -33,6 +33,7 @@ export class Rank {
         user.level,
         user.xp,
         user.xpNeeded,
+        // rank,
         CUSTOM_FONT
       );
 

@@ -1,5 +1,6 @@
-import sqz from "sequelize";
-import { INITIAL_XP_NEEDED } from "../config.js";
+import mongoose from "mongoose";
+
+import { INITIAL_XP_NEEDED, MONGODB_URL } from "../config.js";
 
 export class DataBase {
   constructor() {
@@ -9,110 +10,82 @@ export class DataBase {
   }
 
   initDb() {
-    let sequelize;
-    sequelize = new sqz.Sequelize(process.env.DATABASE_URL, {
-      logging: false,
+    mongoose.connect(MONGODB_URL, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
 
-    var User = sequelize.define(
-      "user",
-      {
-        userId: {
-          type: sqz.DataTypes.BIGINT,
-          field: "user_id",
-        },
-        level: {
-          type: sqz.DataTypes.INTEGER,
-          field: "level",
-        },
-        xp: {
-          type: sqz.DataTypes.FLOAT,
-          field: "xp",
-        },
-        xpNeeded: {
-          type: sqz.DataTypes.FLOAT,
-          field: "xp_needed",
-        },
-        cuckValue: {
-          type: sqz.DataTypes.FLOAT,
-          field: "cuck_value",
-        },
-        fidalgoValue: {
-          type: sqz.DataTypes.FLOAT,
-          field: "fidalgo_value",
-        },
-        goyValue: {
-          type: sqz.DataTypes.FLOAT,
-          field: "goy_value",
-        },
-        cuckChangedDate: {
-          type: sqz.DataTypes.DATE,
-          field: "cuck_changed_date",
-        },
-        goyChangedDate: {
-          type: sqz.DataTypes.DATE,
-          field: "goy_changed_date",
-        },
-        fidalgoChangedDate: {
-          type: sqz.DataTypes.DATE,
-          field: "fidalgo_changed_date",
-        },
-        xpChangedDate: {
-          type: sqz.DataTypes.DATE,
-          field: "xp_changed_date",
-        },
-      },
-      {
-        freezeTableName: true, // Model tableName will be the same as the model name
-      }
-    );
+    const User = mongoose.model("User", {
+      userId: Number,
+      level: Number,
+      xp: Number,
+      xpNeeded: Number,
+      cuckValue: Number,
+      fidalgoValue: Number,
+      goyValue: Number,
+      cuckChangedDate: Date,
+      goyChangedDate: Date,
+      fidalgoChangedDate: Date,
+      xpChangedDate: Date,
+    });
 
-    var Lives = sequelize.define(
-      "lives",
-      {
-        channelName: {
-          type: sqz.DataTypes.STRING,
-          field: "channel_name",
-        },
-        channelId: {
-          type: sqz.DataTypes.STRING,
-          field: "channel_id",
-        },
-      },
-      {
-        freezeTableName: true, // Model tableName will be the same as the model name
-      }
-    );
+    const Lives = mongoose.model("Lives", {
+      channelName: String,
+      channelId: String,
+    });
 
-    User.sync();
-    Lives.sync();
+    Lives.findOneOrCreate = async function findOneOrCreate(
+      condition,
+      defaults,
+      callback
+    ) {
+      const self = this;
+      return self.findOne(condition, (err, result) => {
+        let newDict = Object.assign({}, condition, defaults);
+
+        return result == null
+          ? callback(err, result)
+          : self.create(newDict, (err, result) => {
+              return callback(err, result);
+            });
+      });
+    };
 
     return { User, Lives };
   }
 
-  getUser(userId) {
-    return this.users.findOrCreate({
-      where: { userId: userId },
-      defaults: {
-        level: 1,
-        xp: 0.0,
-        xpNeeded: INITIAL_XP_NEEDED,
-      },
+  async getUser(userId) {
+    return this.users.findOne({ userId: userId }).then((result, err) => {
+      if (result != null) {
+        console.log("User founded");
+        return result;
+      } else if (err == null && result == null) {
+        console.log("User created");
+
+        return this.users.create({
+          userId: userId,
+          level: 1,
+          xp: 0.0,
+          xpNeeded: INITIAL_XP_NEEDED,
+        });
+      } else {
+        console.log(err);
+        return null;
+      }
     });
   }
 
   updateUser(userId, level, xp, xpNeeded, xpChangedDate) {
-    this.users.findOne({ where: { userId: userId } }).then((user) => {
-      if (!user) {
-        console.log("error");
-        return;
-      }
-
-      user.level = level;
-      user.xp = xp;
-      user.xpNeeded = xpNeeded;
-      user.xpChangedDate = xpChangedDate;
-      user.save();
+    this.users.findOne({ userId: userId }, function (_, doc) {
+      (doc.level = level),
+        (doc.xp = xp),
+        (doc.xpNeeded = xpNeeded),
+        (doc.xpChangedDate = xpChangedDate),
+        doc.save();
     });
+  }
+
+  getAllUsers() {
+    return this.users.find();
   }
 }

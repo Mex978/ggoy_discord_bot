@@ -1,6 +1,9 @@
 import { Message, MessageEmbed } from "discord.js";
 import { PREFIX } from "./config.js";
 
+import { createRequire } from "module";
+export const require = createRequire(import.meta.url);
+
 export const createErrorEmbed = (content) =>
   new MessageEmbed().setColor("#ff0000").setDescription(content);
 
@@ -23,6 +26,7 @@ export const getCardHtml = (
   current_level,
   current_xp,
   target_xp,
+  // rank,
   base_64_font
 ) => {
   function numberToKNotation(num) {
@@ -209,3 +213,16 @@ export const getCardHtml = (
 </html>
 `;
 };
+
+// .rank {
+//   position: absolute;
+//   right: 30px;
+//   top: 20px;
+//   align-items: end;
+//   color: white;
+//   font-size: 32px;
+// }
+
+{
+  /* <div class="rank">#${rank}</div> */
+}
