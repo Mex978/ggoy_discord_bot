@@ -24,14 +24,26 @@ export class Help {
         )
         .addField(
           "MUSIC",
-          `\`\\play [Nome para pesquisar]\`
+          `\`\\play [Nome para pesquisar ou link (Youtube | Spotify)] ou \\p [Nome para pesquisar ou link (Youtube | Spotify)]\`
+        Toca a música que foi passada por parametro, se e somente se, for encontrada XD
+
+        \`\\playlist [link para a playlist no YouTube] ou \\pl [link para a playlist no YouTube]\`
         Toca a música que foi passada por parametro, se e somente se, for encontrada XD
     
-        \`\\loop ou \\loop [numero de vezes]\`
-        Deixa a música que está tocando atualmente em loop infinitas vezes no primeiro caso ou um número específico de vezes no segundo
+        \`\\loop\`
+        Deixa a música que está tocando atualmente em loop infinitas vezes
+
+        \`\\repeatQueue\`
+        Deixa a queue que está tocando atualmente em loop infinitas vezes
     
         \`\\skip\`
         Pula a música atual, se alguma estiver tocando
+
+        \`\\pause\`
+        Pausa a música atual, se alguma estiver tocando
+
+        \`\\resume\`
+        Resume a música pausada, se esta existir
     
         \`\\stop\`
         Para todas as músicas
@@ -40,10 +52,10 @@ export class Help {
         Mostra o nome da música que está tocando, se esta existir
     
         \`\\volume\`
-        Exibe o volume atual do bot de música
+        Exibe o volume atual do bot de música se este estiver tocando
     
-        \`\\volume [valor entre 0.0 e 1.0]\`
-        Ajusta o volume do bot de música
+        \`\\volume [valor entre 0 e 100]\`
+        Ajusta o volume do bot de música em porcentagem (Mas pode passar do limite hehe)
     
         \`\\queue\`
         Mostra a fila de músicas a serem reproduzidas`
