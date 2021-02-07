@@ -1,7 +1,6 @@
 import { Message } from "discord.js";
 import { XP_PER_CHARACTER, NEXT_LEVEL_XP_FACTOR } from "./../config.js";
 import { DataBase } from "../db/client.js";
-import { Rank } from "../commands/rank.js";
 
 export class XpManager {
   constructor(database = new DataBase()) {
