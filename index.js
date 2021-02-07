@@ -38,6 +38,8 @@ const player = new Player(client, {
   quality: "high",
 });
 
+process.env.TZ = "America/Sao_Paulo";
+
 client.player = player;
 let musicHandler = new Music(player);
 
