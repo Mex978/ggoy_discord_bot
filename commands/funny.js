@@ -8,12 +8,9 @@ import timediff from "timediff";
 import { XpManager } from "../core/xp_manager.js";
 
 export class Funny {
-  constructor(msg, repo) {
-    this.repository = new XpManager();
-    Object.assign(this.repository, repo);
-
-    this.message = new Message();
-    Object.assign(this.message, msg);
+  constructor(msg = new Message(), repo = new XpManager()) {
+    this.repository = repo;
+    this.message = msg;
   }
 
   parseCommand() {
@@ -30,26 +27,22 @@ export class Funny {
     this.repository.db.getUser(this.message.author.id).then((result) => {
       const dateChanged =
         type === "cuck"
-          ? result[0].get("cuckChangedDate")
+          ? result.cuckChangedDate
           : type === "goy"
-          ? result[0].get("goyChangedDate")
-          : result[0].get("fidalgoChangedDate");
+          ? result.goyChangedDate
+          : result.fidalgoChangedDate;
 
       const currentValue =
         type === "cuck"
-          ? result[0].get("cuckValue")
+          ? result.cuckValue
           : type === "goy"
-          ? result[0].get("goyValue")
-          : result[0].get("fidalgoValue");
+          ? result.goyValue
+          : result.fidalgoValue;
 
-      const now = new Date();
-      now.setHours(-3);
-      now.setMinutes(0);
-      now.setSeconds(0);
-      now.setMilliseconds(0);
+      const now = new Date().toJSON().slice(0, 10);
 
       var value;
-      if (dateChanged == null || now > dateChanged) {
+      if (dateChanged == null || now > dateChanged.toJSON().slice(0, 10)) {
         value = Math.random() * 100;
         value = parseFloat(value.toFixed(2));
       } else {
@@ -57,7 +50,7 @@ export class Funny {
       }
 
       this.repository.db.users
-        .findOne({ where: { userId: this.message.author.id } })
+        .findOne({ userId: this.message.author.id })
         .then(async (user) => {
           if (!user) {
             console.log("error");
