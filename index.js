@@ -27,6 +27,14 @@ import { Admin } from "./commands/admin.js";
 import { DataBase } from "./db/client.js";
 import { Help } from "./commands/help.js";
 const { Player } = require("discord-music-player");
+const express = require("express");
+
+const app = express();
+const port = 3000;
+
+app.get("/", (_, res) => res.send("Hello World!"));
+
+app.listen(port, () => console.log(`GGoyBot at listening to port ${port}`));
 
 const client = new Client({ disableMentions: "none" });
 const player = new Player(client, {
