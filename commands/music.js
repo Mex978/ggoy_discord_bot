@@ -206,10 +206,10 @@ export class Music {
         if (!isPlaying) {
           message.channel.send(
             createSuccessEmbed(
-              `Start playing: [${song.name}](${song.url}) - <@${message.author.id}`
+              `Start playing: [${song.name}](${song.url}) - <@${message.author.id}>`
             )
           );
-          _eventsQueue(message);
+          this._eventsQueue(message);
         }
       });
   }
