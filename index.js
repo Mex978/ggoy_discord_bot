@@ -102,7 +102,7 @@ client.on("ready", () => {
         .fetch(LISTENED_CHANNELS[message.peer_id.channel_id].channel)
         .then((channel) => {
           channel.send(
-            createSuccessEmbed(`${message.message}`).setTitle(
+            createSuccessEmbed(`@everyone ${message.message}`).setTitle(
               LISTENED_CHANNELS[message.peer_id.channel_id].name
             )
           );
