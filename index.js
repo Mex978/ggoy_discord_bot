@@ -9,8 +9,10 @@ import {
   ADMIN_COMMANDS,
   TWITCH_COMMANDS,
   INITIAL_VOLUME,
+  LISTENED_CHANNELS,
 } from "./config.js";
 import {
+  createSuccessEmbed,
   // createErrorEmbed,
   // createSuccessEmbed,
   parseMessageToCommand,
@@ -27,6 +29,7 @@ import { Admin } from "./commands/admin.js";
 import { DataBase } from "./db/client.js";
 import { Help } from "./commands/help.js";
 const { Player } = require("discord-music-player");
+import { init } from "./core/telegram_listener.js";
 const express = require("express");
 
 const app = express();
@@ -79,7 +82,33 @@ let twListener;
 let admin;
 
 client.on("ready", () => {
-  console.clear();
+  // console.clear();
+
+  init((updates) => {
+    const newChannelMessages = updates
+      .filter((update) => {
+        if (
+          update._ === "updateNewChannelMessage" &&
+          update.message.post &&
+          update.message.peer_id.channel_id in LISTENED_CHANNELS
+        ) {
+          return update.message;
+        }
+      })
+      .map(({ message }) => message);
+
+    for (const message of newChannelMessages) {
+      client.channels
+        .fetch(LISTENED_CHANNELS[message.peer_id.channel_id].channel)
+        .then((channel) => {
+          channel.send(
+            createSuccessEmbed(`${message.message}`).setTitle(
+              LISTENED_CHANNELS[message.peer_id.channel_id].name
+            )
+          );
+        });
+    }
+  });
 
   const db = new DataBase();
   repository = new XpManager(db);
