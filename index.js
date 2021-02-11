@@ -29,7 +29,7 @@ import { Admin } from "./commands/admin.js";
 import { DataBase } from "./db/client.js";
 import { Help } from "./commands/help.js";
 const { Player } = require("discord-music-player");
-import { init } from "./core/telegram_listener.js";
+import { TelegramListener } from "./core/telegram_listener.js";
 const express = require("express");
 
 const app = express();
@@ -84,7 +84,7 @@ let admin;
 client.on("ready", () => {
   // console.clear();
 
-  init((updates) => {
+  const tL = new TelegramListener((updates) => {
     const newChannelMessages = updates
       .filter((update) => {
         if (
@@ -109,6 +109,8 @@ client.on("ready", () => {
         });
     }
   });
+
+  tL.init();
 
   const db = new DataBase();
   repository = new XpManager(db);
