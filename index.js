@@ -87,17 +87,24 @@ client.on("ready", () => {
   const tL = new TelegramListener((updates) => {
     const newChannelMessages = updates
       .filter((update) => {
-        if (
-          update._ === "updateNewChannelMessage" &&
-          update.message.post &&
-          update.message.peer_id.channel_id in LISTENED_CHANNELS
-        ) {
-          return update.message;
+        if (update._ === "updateNewChannelMessage") {
+          console.log(update);
+
+          if (update.message.post) {
+            if (update.message.peer_id.channel_id in LISTENED_CHANNELS) {
+              console.log("--------------------------------------");
+              console.log(update);
+              console.log("--------------------------------------");
+              return update.message;
+            }
+          }
         }
       })
       .map(({ message }) => message);
 
     for (const message of newChannelMessages) {
+      console.log(LISTENED_CHANNELS[message.peer_id.channel_id]);
+
       client.channels
         .fetch(LISTENED_CHANNELS[message.peer_id.channel_id].channel)
         .then((channel) => {

@@ -13,6 +13,10 @@ export const LISTENED_CHANNELS = {
     name: "Promoções de Jogos",
     channel: "809190128815570984",
   },
+  // 1396715327: {
+  //   name: "Canal Qualquer",
+  //   channel: "809190128815570984",
+  // },
   1194851971: {
     name: "GGoy Teste",
     channel: "505840665062670337",
