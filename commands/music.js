@@ -312,6 +312,7 @@ export class Music {
 
     if (isPlaying) {
       this.player.stop(message.guild.id);
+
       message.channel.send(
         createSuccessEmbed("Music stopped, the Queue was cleared!")
       );

@@ -42,9 +42,9 @@ app.listen(port, () => console.log(`GGoyBot at listening to port ${port}`));
 const client = new Client({ disableMentions: "none" });
 const player = new Player(client, {
   leaveOnEnd: true,
-  leaveOnStop: false,
+  leaveOnStop: true,
   leaveOnEmpty: true,
-  timeout: 60,
+  timeout: 5,
   volume: INITIAL_VOLUME,
   quality: "high",
 });
@@ -85,6 +85,7 @@ client.on("ready", () => {
   // console.clear();
 
   const tL = new TelegramListener((updates) => {
+    console.log(updates);
     const newChannelMessages = updates
       .filter((update) => {
         if (update._ === "updateNewChannelMessage") {
